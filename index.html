@@ -1,4 +1,69 @@
-<html>
-  <head></head>
-  <body>moukaeritai.work domain apex page.</body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>moukaeritai.work | Geek Landing</title>
+    <link rel="canonical" href="https://moukaeritai.work/">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">~/moukaeritai.work</div>
+            <div>
+                <a href="#projects">./projects</a>
+                <span style="margin: 0 10px; color: #30363d;">|</span>
+                <a href="#contact">./contact</a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="dot red"></div>
+                <div class="dot yellow"></div>
+                <div class="dot green"></div>
+            </div>
+            <div class="terminal-body">
+                <div class="command-line">
+                    <span class="prompt">user@moukaeritai:~$</span>
+                    <span id="typewriter"></span><span class="cursor"></span>
+                </div>
+                <div class="output">
+                    <p>> Initializing hobby protocols...</p>
+                    <p>> Loading projects...</p>
+                    <p>> Status: ONLINE</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="projects" class="grid">
+            <article class="card">
+                <h3>./projects/web-dev</h3>
+                <p>Experimenting with modern web technologies and frameworks. Building tools for the open web.</p>
+            </article>
+            <article class="card">
+                <h3>./projects/automation</h3>
+                <p>Scripting away the boring stuff using Python and Bash. Efficiency is key.</p>
+            </article>
+            <article class="card">
+                <h3>./projects/hardware</h3>
+                <p>Tinkering with Raspberry Pis and microcontrollers. Bridging the physical and digital worlds.</p>
+            </article>
+        </div>
+    </div>
+
+    <footer id="contact">
+        <p>&copy; 2025 moukaeritai.work. All systems operational.</p>
+        <p>
+            <a href="#">GitHub</a> &bull; 
+            <a href="#">Twitter</a> &bull; 
+            <a href="mailto:hello@moukaeritai.work">Email</a>
+        </p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
 </html>
