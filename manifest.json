@@ -8,13 +8,13 @@
   "description": "Geek Landing Page for moukaeritai.work",
   "icons": [
     {
-      "src": "moukaeritai-pictgram/64x64.webp/slate_teal.webp",
+      "src": "pictgram/64x64.webp/slate_teal.webp",
       "sizes": "64x64",
       "type": "image/webp"
     },
     {
-      "src": "moukaeritai-pictgram/512x512.png/slate_teal.png",
-      "sizes": "512x512",
+      "src": "pictgram/64x64.png/slate_teal.png",
+      "sizes": "64x64",
       "type": "image/png"
     }
   ]
