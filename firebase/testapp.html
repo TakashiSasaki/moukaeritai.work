@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Firebase App Metadata Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; line-height: 1.45; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    button { padding: 8px 14px; cursor: pointer; }
+    .box { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; margin: 14px 0; background: #fff; }
+    pre { background: #f6f8fa; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; overflow: auto; }
+    code { background: #f6f8fa; border: 1px solid #e5e7eb; border-radius: 6px; padding: 1px 6px; }
+    .muted { color: #6b7280; }
+    .warn { color: #b45309; }
+  </style>
+</head>
+<body>
+  <h1>Firebase App メタ情報テスト</h1>
+
+  <div class="box">
+    <div class="row">
+      <button id="btnRefresh">再取得</button>
+      <button id="btnCopy">JSONをコピー</button>
+      <span class="muted">初期化済みの <code>app</code> から取れる情報を最大限表示します。</span>
+    </div>
+    <p class="warn" style="margin-top: 10px;">
+      注意：このページは「調査用」です。<br>
+      <strong>Public API</strong>（仕様として保証される情報）と、<strong>探索</strong>（内部実装依存で将来変わり得る情報）を分けて表示します。
+    </p>
+  </div>
+
+  <div class="box">
+    <h2>Public API（保証される情報）</h2>
+    <pre id="publicView">{}</pre>
+  </div>
+
+  <div class="box">
+    <h2>Apps 一覧（getApps）</h2>
+    <pre id="appsView">[]</pre>
+  </div>
+
+  <div class="box">
+    <h2>探索：app の ownKeys / property descriptors（実装依存）</h2>
+    <pre id="reflectView">{}</pre>
+  </div>
+
+  <div class="box">
+    <h2>ログ</h2>
+    <pre id="logView"></pre>
+  </div>
+
+  <script type="module">
+    import {
+      initializeApp,
+      getApps,
+      getApp
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+
+    import { firebaseConfig } from "./firebaseConfig.js";
+
+    const els = {
+      publicView: document.getElementById("publicView"),
+      appsView: document.getElementById("appsView"),
+      reflectView: document.getElementById("reflectView"),
+      logView: document.getElementById("logView"),
+      btnRefresh: document.getElementById("btnRefresh"),
+      btnCopy: document.getElementById("btnCopy"),
+    };
+
+    function now() { return new Date().toISOString(); }
+
+    function log(msg, obj) {
+      const line =
+        `[${now()}] ${msg}` + (obj ? " " + JSON.stringify(obj, null, 2) : "");
+      els.logView.textContent += line + "\n";
+      els.logView.scrollTop = els.logView.scrollHeight;
+    }
+
+    function safeJsonStringify(obj) {
+      const seen = new WeakSet();
+      return JSON.stringify(obj, (k, v) => {
+        if (typeof v === "object" && v !== null) {
+          if (seen.has(v)) return "[Circular]";
+          seen.add(v);
+        }
+        if (typeof v === "function") return `[Function ${v.name || "(anonymous)"}]`;
+        if (typeof v === "bigint") return v.toString();
+        return v;
+      }, 2);
+    }
+
+    function summarizeDescriptor(d) {
+      // 値が大きい/循環する可能性があるので抑制した要約
+      const out = {
+        enumerable: !!d.enumerable,
+        configurable: !!d.configurable,
+      };
+      if ("writable" in d) out.writable = !!d.writable;
+      if ("value" in d) {
+        const v = d.value;
+        out.type = v === null ? "null" : Array.isArray(v) ? "array" : typeof v;
+        out.preview =
+          typeof v === "string" ? (v.length > 120 ? v.slice(0, 120) + "…" : v) :
+          typeof v === "number" || typeof v === "boolean" ? v :
+          typeof v === "function" ? `[Function ${v.name || "(anonymous)"}]` :
+          v && typeof v === "object" ? `[Object ${v.constructor?.name || "Object"}]` :
+          v;
+      } else {
+        out.type = "accessor";
+        out.get = d.get ? `[Function ${d.get.name || "get"}]` : null;
+        out.set = d.set ? `[Function ${d.set.name || "set"}]` : null;
+      }
+      return out;
+    }
+
+    function buildPublicView(app) {
+      // FirebaseApp の Public API として期待できる範囲
+      const view = {
+        app: {
+          name: app.name,
+          options: app.options, // firebaseConfig に相当（公開される前提の情報）
+          automaticDataCollectionEnabled: app.automaticDataCollectionEnabled,
+        },
+        derivedFromOptions: {
+          // optionsの代表的キー（存在するものだけ見せる）
+          apiKey: app.options?.apiKey ?? null,
+          authDomain: app.options?.authDomain ?? null,
+          projectId: app.options?.projectId ?? null,
+          appId: app.options?.appId ?? null,
+          messagingSenderId: app.options?.messagingSenderId ?? null,
+          measurementId: app.options?.measurementId ?? null,
+          storageBucket: app.options?.storageBucket ?? null,
+          databaseURL: app.options?.databaseURL ?? null,
+        },
+        note: [
+          "FirebaseApp の Public API で安定して参照できるのは主に name/options/automaticDataCollectionEnabled です。",
+          "options は Web SDK では公開前提の識別情報であり、秘密鍵ではありません。",
+          "内部プロパティ（_container 等）は非公開で将来変わるため、アプリコードで依存しないでください。"
+        ],
+      };
+      return view;
+    }
+
+    function buildAppsView() {
+      const apps = getApps();
+      return apps.map(a => ({
+        name: a.name,
+        automaticDataCollectionEnabled: a.automaticDataCollectionEnabled,
+        options: a.options,
+      }));
+    }
+
+    function buildReflectView(app) {
+      // 探索用途：appにぶら下がるキーを列挙して、descriptor を要約表示
+      const keys = Reflect.ownKeys(app);
+      const desc = Object.getOwnPropertyDescriptors(app);
+      const summarized = {};
+      for (const k of keys) {
+        const keyStr = typeof k === "symbol" ? k.toString() : String(k);
+        summarized[keyStr] = summarizeDescriptor(desc[k]);
+      }
+      return {
+        ownKeys: keys.map(k => (typeof k === "symbol" ? k.toString() : String(k))),
+        descriptors: summarized,
+      };
+    }
+
+    // 初期化：同ページ再読み込み等で二重初期化しないように getApps を見る
+    function getOrInitApp() {
+      const apps = getApps();
+      if (apps.length > 0) {
+        // 既に初期化されている場合、デフォルトを取得
+        try {
+          return getApp();
+        } catch {
+          return apps[0];
+        }
+      }
+      return initializeApp(firebaseConfig);
+    }
+
+    async function refresh() {
+      els.publicView.textContent = "{}";
+      els.appsView.textContent = "[]";
+      els.reflectView.textContent = "{}";
+
+      let app;
+      try {
+        app = getOrInitApp();
+      } catch (e) {
+        log("initialize/getApp error", { name: e?.name, message: e?.message });
+        els.publicView.textContent = safeJsonStringify({ error: "App init failed", detail: String(e) });
+        return;
+      }
+
+      const publicView = buildPublicView(app);
+      const appsView = buildAppsView();
+      const reflectView = buildReflectView(app);
+
+      els.publicView.textContent = safeJsonStringify(publicView);
+      els.appsView.textContent = safeJsonStringify(appsView);
+      els.reflectView.textContent = safeJsonStringify(reflectView);
+
+      log("refreshed", { appName: app.name, appsCount: getApps().length });
+    }
+
+    els.btnRefresh.addEventListener("click", refresh);
+
+    els.btnCopy.addEventListener("click", async () => {
+      const all = {
+        public: JSON.parse(els.publicView.textContent || "{}"),
+        apps: JSON.parse(els.appsView.textContent || "[]"),
+        reflect: JSON.parse(els.reflectView.textContent || "{}"),
+      };
+      const text = safeJsonStringify(all);
+      try {
+        await navigator.clipboard.writeText(text);
+        log("copied JSON to clipboard");
+      } catch (e) {
+        log("clipboard write failed", { name: e?.name, message: e?.message });
+      }
+    });
+
+    log("testapp.html initialized");
+    refresh();
+  </script>
+</body>
+</html>
