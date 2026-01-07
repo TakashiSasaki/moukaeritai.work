@@ -156,145 +156,20 @@
 
     <div class="layout-container">
         <!-- "On top of that 60" -->
-        <div class="carousel-area h-60" id="carousel-60"></div>
+        <ring-carousel class="carousel-area h-60" id="carousel-60" item-size="60" row="1"></ring-carousel>
 
         <!-- "On top of that 120" -->
-        <div class="carousel-area h-120" id="carousel-120"></div>
+        <ring-carousel class="carousel-area h-120" id="carousel-120" item-size="120" row="2"></ring-carousel>
 
         <!-- "On top of that 240" -->
-        <div class="carousel-area h-240" id="carousel-240"></div>
+        <ring-carousel class="carousel-area h-240" id="carousel-240" item-size="240" row="3"></ring-carousel>
 
         <!-- "Bottom 480" -->
-        <div class="carousel-area h-480" id="carousel-480"></div>
+        <ring-carousel class="carousel-area h-480" id="carousel-480" item-size="480" row="4"></ring-carousel>
     </div>
 
-    <script src="ring-carousel-item.js"></script>
-    <script>
-        /* RingCarouselItem definition moved to ring-carousel-item.js */
-
-        function enableInfiniteScroll(container, track, itemSize, row, initialCount) {
-            let isDragging = false;
-            let startX = 0;
-            let currentTranslate = 0;
-            let prevTranslate = 0;
-            let animationID;
-
-            // Helpers for DOM recycling
-            // Translate is negative (moving left) or positive (moving right)
-
-            function updatePosition() {
-                track.style.transform = `translateX(${currentTranslate}px)`;
-                checkBoundary();
-            }
-
-            function checkBoundary() {
-                // Moving Left (Pushing content left, seeing new content on right) -> Recycle first item to end
-                // Use while to handle fast dragging/scrolling where we might ship multiple items at once
-                while (currentTranslate <= -itemSize) {
-                    // Move first item to end
-                    const firstItem = track.firstElementChild;
-                    track.appendChild(firstItem);
-
-                    // Adjust translate to cancel out the DOM shift
-                    currentTranslate += itemSize;
-                    prevTranslate += itemSize;
-                    // startX remains same, we just shifted the base coordinate system
-                }
-
-                // Adjust transform immediately so subsequent loops check updated position
-                track.style.transform = `translateX(${currentTranslate}px)`;
-
-                // Moving Right (Pushing content right, seeing new content on left) -> Recycle last item to start
-                while (currentTranslate > 0) {
-                    // Move last item to start
-                    const lastItem = track.lastElementChild;
-                    track.insertBefore(lastItem, track.firstElementChild);
-
-                    // Adjust translate
-                    currentTranslate -= itemSize;
-                    prevTranslate -= itemSize;
-                }
-
-                track.style.transform = `translateX(${currentTranslate}px)`;
-            }
-
-            // Pointer Events (Unifies Mouse & Touch)
-            const onDown = (e) => {
-                isDragging = true;
-                startX = e.pageX;
-                container.style.cursor = 'grabbing';
-                container.setPointerCapture(e.pointerId);
-                cancelAnimationFrame(animationID);
-            };
-
-            const onMove = (e) => {
-                if (!isDragging) return;
-                cancelAnimationFrame(animationID); // Prevent stacked RAF calls
-                // e.preventDefault(); // Prevent native scroll if needed
-                const currentX = e.pageX;
-                const diff = currentX - startX;
-                currentTranslate = prevTranslate + diff;
-
-                animationID = requestAnimationFrame(updatePosition);
-            };
-
-            const onUp = (e) => {
-                isDragging = false;
-                prevTranslate = currentTranslate;
-                container.style.cursor = 'grab';
-                container.releasePointerCapture(e.pointerId);
-                cancelAnimationFrame(animationID);
-            };
-
-            // Listeners
-            container.addEventListener('pointerdown', onDown);
-            container.addEventListener('pointermove', onMove);
-            container.addEventListener('pointerup', onUp);
-            container.addEventListener('pointerleave', onUp);
-            // Cancel native drag behavior to prevent image dragging etc
-            container.addEventListener('dragstart', (e) => e.preventDefault());
-        }
-
-        // Populate
-        // Modified to pass row and count to enableInfiniteScroll
-        const wrappers = [
-            { id: 'carousel-60', size: 60, row: 1 },
-            { id: 'carousel-120', size: 120, row: 2 },
-            { id: 'carousel-240', size: 240, row: 3 },
-            { id: 'carousel-480', size: 480, row: 4 }
-        ];
-
-        wrappers.forEach(config => {
-            const container = document.getElementById(config.id);
-            if (container) {
-                const track = document.createElement('div');
-                track.className = 'carousel-track';
-                container.appendChild(track);
-
-                const containerWidth = container.clientWidth;
-                const count = Math.ceil(containerWidth / config.size) + 1;
-
-                for (let i = 0; i < count; i++) {
-                    const sq = document.createElement('ring-carousel-item');
-
-                    let color = '#238636'; // default
-                    if (config.size === 120) color = '#1f6feb';
-                    else if (config.size === 240) color = '#a371f7';
-                    else if (config.size === 480) color = '#f78166';
-
-                    sq.configure({
-                        size: config.size,
-                        color: color,
-                        label: `(${config.row}, ${i + 1})`
-                    });
-
-                    track.appendChild(sq);
-                }
-
-                enableInfiniteScroll(container, track, config.size, config.row, count);
-            }
-        });
-    </script>
+    <script src="components/ring-carousel-item.js"></script>
+    <script src="components/ring-carousel.js"></script>
 </body>
 
 </html>
