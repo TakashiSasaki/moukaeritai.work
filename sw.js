@@ -4,7 +4,10 @@ const ASSETS = [
   '/index.html',
   '/style.css',
   '/script.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/experimental-layout-1.html',
+  '/components/ring-carousel-item.js',
+  '/components/ring-carousel.js'
 ];
 
 self.addEventListener('install', (event) => {
