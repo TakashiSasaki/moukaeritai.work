@@ -27,7 +27,16 @@ self.addEventListener('message', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
-      .then((response) => response || fetch(event.request))
+      .then((response) => {
+        if (response) {
+          return response;
+        }
+        // Fix for "redirect mode is not follow" error on navigation
+        if (event.request.mode === 'navigate') {
+          return fetch(event.request.url);
+        }
+        return fetch(event.request);
+      })
   );
 });
 
