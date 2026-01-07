@@ -24,27 +24,30 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// Helper to clean response
+const cleanResponse = (response) => {
+  if (!response.redirected) return response;
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  });
+};
+
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
         if (response) {
-          return response;
+          return cleanResponse(response);
         }
+
         // Fix for "redirect mode is not follow" error on navigation
         if (event.request.mode === 'navigate') {
-          return fetch(event.request.url).then((response) => {
-            // If redirected, create a new Response to strip the 'redirected' flag
-            if (response.redirected) {
-              return new Response(response.body, {
-                status: response.status,
-                statusText: response.statusText,
-                headers: response.headers
-              });
-            }
-            return response;
-          });
+          return fetch(event.request.url).then(cleanResponse);
         }
+
         return fetch(event.request);
       })
   );
