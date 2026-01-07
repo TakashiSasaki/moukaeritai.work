@@ -35,5 +35,10 @@ Instead of an endless list of new items, the carousel uses a **fixed set of DOM 
 - **Concurrency Control:** `cancelAnimationFrame` is called at the start of each input event to ensure only one position update/boundary check happens per frame, preventing "violent" flickering or skipping during high-frequency mouse movements.
 - **Modulo Smoothing:** The `while` loop in the boundary check allows the carousel to handle large shifts (faster than item size per frame) gracefully by recycling multiple nodes if necessary.
 
+### 4. Component Model
+- **Custom Element:** Items are implemented as `<ring-carousel-item>` elements (extending `HTMLElement`).
+- **Encapsulation:** The element exposes a `configure({ size, color, label })` method to handle its own internal styling and content logic, replacing previous loop-based DOM manipulation.
+- **Compatibility:** It maintains full compatibility with the existing CSS classes (`.carousel-item`) and Flexbox layout.
+
 ## File Structure
 - `experimental-layout-1.html`: Self-contained HTML/CSS/JS implementation.

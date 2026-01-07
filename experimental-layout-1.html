@@ -171,6 +171,32 @@
     <script>
 
 
+        // Custom Element Definition
+        class RingCarouselItem extends HTMLElement {
+            constructor() {
+                super();
+                // Ensure proper display if not set by CSS
+                this.style.display = 'flex';
+            }
+
+            configure({ size, color, label }) {
+                this.className = 'carousel-item';
+                this.style.width = size + 'px';
+                this.style.height = size + 'px';
+                this.style.backgroundColor = color;
+
+                // Font size logic based on size (migrated from loop)
+                if (size === 60) this.style.fontSize = '0.7rem';
+                else if (size === 120) this.style.fontSize = '1.2rem';
+                else if (size === 240) this.style.fontSize = '2rem';
+                else if (size === 480) this.style.fontSize = '3rem';
+
+                this.textContent = label;
+            }
+        }
+        customElements.define('ring-carousel-item', RingCarouselItem);
+
+
         function enableInfiniteScroll(container, track, itemSize, row, initialCount) {
             let isDragging = false;
             let startX = 0;
@@ -274,26 +300,19 @@
                 const count = Math.ceil(containerWidth / config.size) + 1;
 
                 for (let i = 0; i < count; i++) {
-                    const sq = document.createElement('div');
-                    sq.className = 'carousel-item';
-                    sq.style.width = config.size + 'px';
-                    sq.style.height = config.size + 'px';
+                    const sq = document.createElement('ring-carousel-item');
 
-                    if (config.size === 60) {
-                        sq.style.backgroundColor = '#238636';
-                        sq.style.fontSize = '0.7rem';
-                    } else if (config.size === 120) {
-                        sq.style.backgroundColor = '#1f6feb';
-                        sq.style.fontSize = '1.2rem';
-                    } else if (config.size === 240) {
-                        sq.style.backgroundColor = '#a371f7';
-                        sq.style.fontSize = '2rem';
-                    } else if (config.size === 480) {
-                        sq.style.backgroundColor = '#f78166';
-                        sq.style.fontSize = '3rem';
-                    }
+                    let color = '#238636'; // default
+                    if (config.size === 120) color = '#1f6feb';
+                    else if (config.size === 240) color = '#a371f7';
+                    else if (config.size === 480) color = '#f78166';
 
-                    sq.textContent = `(${config.row}, ${i + 1})`;
+                    sq.configure({
+                        size: config.size,
+                        color: color,
+                        label: `(${config.row}, ${i + 1})`
+                    });
+
                     track.appendChild(sq);
                 }
 
