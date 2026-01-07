@@ -63,4 +63,109 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.reload();
         });
     }
+
+    // --- Settings / Personal UUID Logic ---
+    const uuidInput = document.getElementById('personal-uuid');
+    const saveBtn = document.getElementById('save-uuid');
+    const saveStatus = document.getElementById('save-status');
+
+    /**
+     * Extracts 32 hex characters and returns normalized UUID format.
+     * @param {string} str 
+     * @returns {string|null}
+     */
+    function normalizeUUID(str) {
+        const hexOnly = str.replace(/[^0-9a-fA-F]/g, '').toLowerCase();
+        if (hexOnly.length !== 32) return null;
+        return [
+            hexOnly.slice(0, 8),
+            hexOnly.slice(8, 12),
+            hexOnly.slice(12, 16),
+            hexOnly.slice(16, 20),
+            hexOnly.slice(20)
+        ].join('-');
+    }
+
+    function validate() {
+        const rawValue = uuidInput.value;
+        const hexOnly = rawValue.replace(/[^0-9a-fA-F]/g, '');
+        const normalized = normalizeUUID(rawValue);
+
+        // Visual feedback logic
+        const segmentLengths = [8, 4, 4, 4, 12];
+        const feedbackContainer = document.getElementById('uuid-feedback');
+        let currentHexIdx = 0;
+
+        segmentLengths.forEach((len, segIdx) => {
+            const span = document.getElementById(`uuid-seg-${segIdx}`);
+            let content = "";
+            let isPartiallyFilled = false;
+
+            for (let i = 0; i < len; i++) {
+                if (currentHexIdx < hexOnly.length) {
+                    content += hexOnly[currentHexIdx].toLowerCase();
+                    currentHexIdx++;
+                    isPartiallyFilled = true;
+                } else {
+                    content += "#";
+                }
+            }
+
+            span.textContent = content;
+
+            // Color logic: 
+            // - GREEN if the segment is fully filled
+            // - LIGHTER/ACCENT if partially filled
+            // - DARK if empty
+            if (content.indexOf('#') === -1) {
+                span.style.color = '#27c93f'; // Complete
+            } else if (isPartiallyFilled) {
+                span.style.color = '#58a6ff'; // Partially filled (blueish to stand out)
+            } else {
+                span.style.color = '#333';    // Empty
+            }
+        });
+
+        // Handle hyphens in UI (simplified: green if previous part is done)
+        if (feedbackContainer) {
+            const texts = feedbackContainer.childNodes;
+            // Hyphens are at index 1, 3, 5, 7 in the childNodes if structured correctly
+            // But we can just use the spans states.
+        }
+
+        if (normalized) {
+            saveBtn.disabled = false;
+            saveBtn.style.opacity = '1';
+        } else {
+            saveBtn.disabled = true;
+            saveBtn.style.opacity = '0.5';
+        }
+    }
+
+    // Load UUID from localStorage
+    const savedUUID = localStorage.getItem('personal_uuid');
+    if (savedUUID) {
+        uuidInput.value = savedUUID;
+        validate();
+    }
+
+    // Validate on every input
+    uuidInput.addEventListener('input', validate);
+
+    // Save UUID
+    saveBtn.addEventListener('click', () => {
+        const normalized = normalizeUUID(uuidInput.value);
+        if (normalized) {
+            localStorage.setItem('personal_uuid', normalized);
+            uuidInput.value = normalized; // Reflect normalized version in UI
+
+            // Show saved status
+            saveStatus.style.opacity = '1';
+            setTimeout(() => {
+                saveStatus.style.opacity = '0';
+            }, 2000);
+
+            validate();
+        }
+    });
 });

@@ -19,6 +19,8 @@
             <div>
                 <a href="#projects">./projects</a>
                 <span style="margin: 0 10px; color: #30363d;">|</span>
+                <a href="#settings">./settings</a>
+                <span style="margin: 0 10px; color: #30363d;">|</span>
                 <a href="#contact">./contact</a>
             </div>
         </nav>
@@ -79,6 +81,31 @@
                 <h3>./clip <span class="badge badge-yellow">UNDER CONSTRUCTION</span></h3>
                 <p>A simple and efficient web clipboard for sharing text and links. Coming soon.</p>
             </a>
+        </div>
+
+        <div id="settings" style="margin-top: 4rem; padding-top: 2rem; border-top: 1px dashed #30363d;">
+            <h3>./settings</h3>
+            <div class="card" style="margin-top: 1rem; max-width: 500px;">
+                <label for="personal-uuid" style="display: block; margin-bottom: 0.5rem; color: #8b949e;">Personal
+                    UUID:</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="personal-uuid" placeholder="ex: 550e8400-e29b-..." autocomplete="username"
+                        style="flex: 1; padding: 0.5rem; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px; font-family: inherit;">
+                    <button id="save-uuid" disabled
+                        style="padding: 0.5rem 1rem; background: #238636; color: white; border: none; border-radius: 4px; cursor: pointer; opacity: 0.5;">Save</button>
+                    <!-- Small hack to show status -->
+                    <span id="save-status"
+                        style="align-self: center; color: #27c93f; opacity: 0; transition: opacity 0.5s;">Saved!</span>
+                </div>
+                <div id="uuid-feedback"
+                    style="margin-top: 0.8rem; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #333; letter-spacing: 1px; user-select: none;">
+                    <span id="uuid-seg-0">########</span>-<span id="uuid-seg-1">####</span>-<span
+                        id="uuid-seg-2">####</span>-<span id="uuid-seg-3">####</span>-<span
+                        id="uuid-seg-4">############</span>
+                </div>
+                <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #8b949e;">Your unique ID for this device. No
+                    password required.</p>
+            </div>
         </div>
     </div>
 
