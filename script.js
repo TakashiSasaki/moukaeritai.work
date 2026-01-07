@@ -13,6 +13,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     typeWriter();
 
+    // --- SPA Router ---
+    const routes = {
+        '': 'home',
+        '#projects': 'projects',
+        '#personalize': 'personalize',
+        '#misc': 'misc'
+    };
+
+    function router() {
+        const hash = window.location.hash;
+        const viewName = routes[hash] || 'home';
+
+        // Hide all views
+        document.querySelectorAll('.spa-view').forEach(view => {
+            view.classList.add('hidden');
+        });
+
+        // Show active view
+        const activeView = document.getElementById(`view-${viewName}`);
+        if (activeView) {
+            activeView.classList.remove('hidden');
+            // Trigger animation reset if needed
+            activeView.style.animation = 'none';
+            activeView.offsetHeight; // trigger reflow
+            activeView.style.animation = null;
+        }
+
+        // Update Nav links
+        document.querySelectorAll('header nav a').forEach(link => {
+            const linkHash = link.getAttribute('href');
+            // Special case for logo or home link
+            if (linkHash === hash || (hash === '' && (linkHash === '#' || linkHash === ''))) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+
+        // Scroll to top on view change
+        window.scrollTo(0, 0);
+    }
+
+    window.addEventListener('hashchange', router);
+    router(); // Initial call
+
     // Register Service Worker for PWA
     // Register Service Worker for PWA with update notification
     if ('serviceWorker' in navigator) {

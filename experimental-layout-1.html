@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experimental Layout 1 | moukaeritai.work</title>
+    <meta name="theme-color" content="#0d1117">
+    <!-- <link rel="stylesheet" href="style.css"> -->
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: block;
+            /* Removed flex centering to allow natural scrolling */
+        }
+
+        .layout-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            max-width: 1024px;
+            margin: 0 auto;
+        }
+
+        .carousel-area {
+            width: 100%;
+            background-color: #161b22;
+            border: 1px dashed #30363d;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+            /* Hide overflow for carousel effect */
+            touch-action: pan-y;
+            /* Allow vertical scroll, handle horizontal in JS */
+            cursor: grab;
+        }
+
+        .carousel-area:active {
+            cursor: grabbing;
+        }
+
+        .carousel-track {
+            display: flex;
+            height: 100%;
+            width: max-content;
+            /* Allow track to expand */
+            user-select: none;
+            will-change: transform;
+        }
+
+        .carousel-area::after {
+            content: attr(data-height);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.9rem;
+            opacity: 0.7;
+            pointer-events: none;
+            z-index: 10;
+            /* Above items? Maybe below if we want items to cover text. User didn't specify. Items cover text naturally if z-index is default. */
+            display: none;
+            /* Hide label as items cover it now */
+        }
+
+        /* Specific heights */
+        /* Specific heights */
+        .h-60 {
+            height: 60px;
+            background-color: rgba(56, 139, 253, 0.05);
+        }
+
+        .h-120 {
+            height: 120px;
+            background-color: rgba(56, 139, 253, 0.1);
+        }
+
+        .h-240 {
+            height: 240px;
+            background-color: rgba(56, 139, 253, 0.15);
+        }
+
+        .h-480 {
+            height: 480px;
+            background-color: rgba(56, 139, 253, 0.2);
+        }
+
+        /* Item styles */
+        .carousel-item {
+            background-color: #238636;
+            border: 1px solid #0d1117;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+            /* Prevent shrinking */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-container">
+        <!-- "On top of that 60" -->
+        <div class="carousel-area h-60" id="carousel-60"></div>
+
+        <!-- "On top of that 120" -->
+        <div class="carousel-area h-120" id="carousel-120"></div>
+
+        <!-- "On top of that 240" -->
+        <div class="carousel-area h-240" id="carousel-240"></div>
+
+        <!-- "Bottom 480" -->
+        <div class="carousel-area h-480" id="carousel-480"></div>
+    </div>
+
+    <script>
+
+
+        function enableInfiniteScroll(container, track, itemSize, row, initialCount) {
+            let isDragging = false;
+            let startX = 0;
+            let currentTranslate = 0;
+            let prevTranslate = 0;
+            let animationID;
+
+            // Helpers for DOM recycling
+            // Translate is negative (moving left) or positive (moving right)
+
+            function updatePosition() {
+                track.style.transform = `translateX(${currentTranslate}px)`;
+                checkBoundary();
+            }
+
+            function checkBoundary() {
+                // Moving Left (Pushing content left, seeing new content on right) -> Recycle first item to end
+                // Use while to handle fast dragging/scrolling where we might ship multiple items at once
+                while (currentTranslate <= -itemSize) {
+                    // Move first item to end
+                    const firstItem = track.firstElementChild;
+                    track.appendChild(firstItem);
+
+                    // Adjust translate to cancel out the DOM shift
+                    currentTranslate += itemSize;
+                    prevTranslate += itemSize;
+                    // startX remains same, we just shifted the base coordinate system
+                }
+
+                // Adjust transform immediately so subsequent loops check updated position
+                track.style.transform = `translateX(${currentTranslate}px)`;
+
+                // Moving Right (Pushing content right, seeing new content on left) -> Recycle last item to start
+                while (currentTranslate > 0) {
+                    // Move last item to start
+                    const lastItem = track.lastElementChild;
+                    track.insertBefore(lastItem, track.firstElementChild);
+
+                    // Adjust translate
+                    currentTranslate -= itemSize;
+                    prevTranslate -= itemSize;
+                }
+
+                track.style.transform = `translateX(${currentTranslate}px)`;
+            }
+
+            // Pointer Events (Unifies Mouse & Touch)
+            const onDown = (e) => {
+                isDragging = true;
+                startX = e.pageX;
+                container.style.cursor = 'grabbing';
+                container.setPointerCapture(e.pointerId);
+                cancelAnimationFrame(animationID);
+            };
+
+            const onMove = (e) => {
+                if (!isDragging) return;
+                cancelAnimationFrame(animationID); // Prevent stacked RAF calls
+                // e.preventDefault(); // Prevent native scroll if needed
+                const currentX = e.pageX;
+                const diff = currentX - startX;
+                currentTranslate = prevTranslate + diff;
+
+                animationID = requestAnimationFrame(updatePosition);
+            };
+
+            const onUp = (e) => {
+                isDragging = false;
+                prevTranslate = currentTranslate;
+                container.style.cursor = 'grab';
+                container.releasePointerCapture(e.pointerId);
+                cancelAnimationFrame(animationID);
+            };
+
+            // Listeners
+            container.addEventListener('pointerdown', onDown);
+            container.addEventListener('pointermove', onMove);
+            container.addEventListener('pointerup', onUp);
+            container.addEventListener('pointerleave', onUp);
+            // Cancel native drag behavior to prevent image dragging etc
+            container.addEventListener('dragstart', (e) => e.preventDefault());
+        }
+
+        // Populate
+        // Modified to pass row and count to enableInfiniteScroll
+        const wrappers = [
+            { id: 'carousel-60', size: 60, row: 1 },
+            { id: 'carousel-120', size: 120, row: 2 },
+            { id: 'carousel-240', size: 240, row: 3 },
+            { id: 'carousel-480', size: 480, row: 4 }
+        ];
+
+        wrappers.forEach(config => {
+            const container = document.getElementById(config.id);
+            if (container) {
+                const track = document.createElement('div');
+                track.className = 'carousel-track';
+                container.appendChild(track);
+
+                const containerWidth = container.clientWidth;
+                const count = Math.ceil(containerWidth / config.size) + 1;
+
+                for (let i = 0; i < count; i++) {
+                    const sq = document.createElement('div');
+                    sq.className = 'carousel-item';
+                    sq.style.width = config.size + 'px';
+                    sq.style.height = config.size + 'px';
+
+                    if (config.size === 60) {
+                        sq.style.backgroundColor = '#238636';
+                        sq.style.fontSize = '0.7rem';
+                    } else if (config.size === 120) {
+                        sq.style.backgroundColor = '#1f6feb';
+                        sq.style.fontSize = '1.2rem';
+                    } else if (config.size === 240) {
+                        sq.style.backgroundColor = '#a371f7';
+                        sq.style.fontSize = '2rem';
+                    } else if (config.size === 480) {
+                        sq.style.backgroundColor = '#f78166';
+                        sq.style.fontSize = '3rem';
+                    }
+
+                    sq.textContent = `(${config.row}, ${i + 1})`;
+                    track.appendChild(sq);
+                }
+
+                enableInfiniteScroll(container, track, config.size, config.row, count);
+            }
+        });
+    </script>
+</body>
+
+</html>
