@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moukaeritai-v0.1.13-20260108083720';
+const CACHE_NAME = 'moukaeritai-v0.1.14-20260108084012';
 const ASSETS = [
   '/',
   '/index.html',
