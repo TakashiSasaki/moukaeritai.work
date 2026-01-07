@@ -332,3 +332,36 @@ a:hover {
 .toast button:hover {
     opacity: 0.9;
 }
+
+/* Navigation Toggle Button */
+.nav-toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 48px;
+    height: 48px;
+    background: rgba(35, 134, 54, 0.2);
+    border: 1px solid rgba(48, 54, 61, 0.8);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    color: #c9d1d9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.nav-toggle-btn:hover {
+    background: rgba(35, 134, 54, 0.4);
+    border-color: #238636;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(35, 134, 54, 0.3);
+}
+
+.nav-toggle-btn:active {
+    transform: translateY(0);
+}
