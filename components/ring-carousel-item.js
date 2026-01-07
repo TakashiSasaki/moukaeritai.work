@@ -1,23 +1,43 @@
 class RingCarouselItem extends HTMLElement {
     constructor() {
         super();
-        // Ensure proper display if not set by CSS
-        this.style.display = 'flex';
+        this.attachShadow({ mode: 'open' });
+    }
+
+    connectedCallback() {
+        // Initial rendering if needed, though configure usually handles it
     }
 
     configure({ size, color, label }) {
-        this.className = 'carousel-item';
-        this.style.width = size + 'px';
-        this.style.height = size + 'px';
-        this.style.backgroundColor = color;
+        // Determine font size based on size
+        let fontSize = '1rem';
+        if (size === 60) fontSize = '0.7rem';
+        else if (size === 120) fontSize = '1.2rem';
+        else if (size === 240) fontSize = '2rem';
+        else if (size === 480) fontSize = '3rem';
 
-        // Font size logic based on size (migrated from loop)
-        if (size === 60) this.style.fontSize = '0.7rem';
-        else if (size === 120) this.style.fontSize = '1.2rem';
-        else if (size === 240) this.style.fontSize = '2rem';
-        else if (size === 480) this.style.fontSize = '3rem';
+        const style = `
+            :host {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: ${size}px;
+                height: ${size}px;
+                background-color: ${color};
+                border: 1px solid #0d1117;
+                color: white;
+                font-weight: bold;
+                flex-shrink: 0;
+                box-sizing: border-box;
+                font-size: ${fontSize};
+                user-select: none;
+            }
+        `;
 
-        this.textContent = label;
+        this.shadowRoot.innerHTML = `
+            <style>${style}</style>
+            <span>${label}</span>
+        `;
     }
 }
 customElements.define('ring-carousel-item', RingCarouselItem);

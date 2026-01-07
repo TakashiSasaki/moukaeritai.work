@@ -1,6 +1,8 @@
 class RingCarousel extends HTMLElement {
     constructor() {
         super();
+        this.attachShadow({ mode: 'open' });
+
         this.isDragging = false;
         this.startX = 0;
         this.currentTranslate = 0;
@@ -9,8 +11,7 @@ class RingCarousel extends HTMLElement {
     }
 
     connectedCallback() {
-        // Prevent double initialization
-        if (this.querySelector('.carousel-track')) return;
+        if (this.shadowRoot.querySelector('.carousel-track')) return;
 
         this.itemSize = parseInt(this.getAttribute('item-size'), 10) || 60;
         this.row = parseInt(this.getAttribute('row'), 10) || 1;
@@ -24,26 +25,51 @@ class RingCarousel extends HTMLElement {
     }
 
     render() {
-        // Create Track
-        this.track = document.createElement('div');
-        this.track.className = 'carousel-track';
+        // Define Styles
+        const bgOpacity = this.itemSize === 60 ? 0.05 :
+            this.itemSize === 120 ? 0.1 :
+                this.itemSize === 240 ? 0.15 : 0.2;
 
-        // Ensure the track is styled correctly for transformations
-        this.track.style.display = 'flex';
-        this.track.style.height = '100%';
-        this.track.style.width = 'max-content';
-        this.track.style.userSelect = 'none';
-        this.track.style.willChange = 'transform';
+        const style = `
+            :host {
+                display: block;
+                width: 100%;
+                height: ${this.itemSize}px;
+                background-color: rgba(56, 139, 253, ${bgOpacity}); /* Replicating .h-60 etc */
+                border: 1px dashed #30363d;
+                border-radius: 6px;
+                position: relative;
+                overflow: hidden;
+                touch-action: pan-y;
+                cursor: grab;
+                box-sizing: border-box;
+                background-color: #161b22; /* Base color override from CSS */
+            }
+            :host(:active) {
+                cursor: grabbing;
+            }
+            .carousel-track {
+                display: flex;
+                height: 100%;
+                width: max-content;
+                user-select: none;
+                will-change: transform;
+            }
+        `;
 
-        this.appendChild(this.track);
+        // Create Shadow Structure
+        this.shadowRoot.innerHTML = `
+            <style>${style}</style>
+            <div class="carousel-track"></div>
+        `;
 
-        // Calculate count based on container width
-        // Use clientWidth. If 0 (hidden), might need a resize observer or default.
-        // For now, assuming visible.
+        this.track = this.shadowRoot.querySelector('.carousel-track');
+
+        // Logic for Item Count
         const containerWidth = this.clientWidth || window.innerWidth;
-        const count = Math.ceil(containerWidth / this.itemSize) + 1; // +1 for buffer
+        const count = Math.ceil(containerWidth / this.itemSize) + 1;
 
-        // Determine Color
+        // Determine Color logic (kept for consistency)
         let color = '#238636';
         if (this.itemSize === 120) color = '#1f6feb';
         else if (this.itemSize === 240) color = '#a371f7';
@@ -64,23 +90,17 @@ class RingCarousel extends HTMLElement {
     }
 
     setupInteractions() {
-        // Bind methods
         this._onDown = this.onDown.bind(this);
         this._onMove = this.onMove.bind(this);
         this._onUp = this.onUp.bind(this);
         this._updatePosition = this.updatePosition.bind(this);
 
+        // Attach listeners to host
         this.addEventListener('pointerdown', this._onDown);
         this.addEventListener('pointermove', this._onMove);
         this.addEventListener('pointerup', this._onUp);
         this.addEventListener('pointerleave', this._onUp);
         this.addEventListener('dragstart', (e) => e.preventDefault());
-
-        // Set cursor style
-        this.style.cursor = 'grab';
-        this.style.touchAction = 'pan-y'; // Allow vertical scroll
-        this.style.overflow = 'hidden'; // Ensure it clips
-        this.style.display = 'block';   // Ensure it has layout
     }
 
     cleanupInteractions() {
@@ -100,7 +120,6 @@ class RingCarousel extends HTMLElement {
         const itemSize = this.itemSize;
         const track = this.track;
 
-        // Moving Left ->
         while (this.currentTranslate <= -itemSize) {
             track.appendChild(track.firstElementChild);
             this.currentTranslate += itemSize;
@@ -109,7 +128,6 @@ class RingCarousel extends HTMLElement {
 
         this.track.style.transform = `translateX(${this.currentTranslate}px)`;
 
-        // Moving Right <-
         while (this.currentTranslate > 0) {
             track.insertBefore(track.lastElementChild, track.firstElementChild);
             this.currentTranslate -= itemSize;
