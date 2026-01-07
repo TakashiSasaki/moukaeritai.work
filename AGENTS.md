@@ -18,6 +18,9 @@ This document tracks architectural decisions, workflows, and infrastructure deta
     - **UI:** Updates the footer version string in `index.html` (Format: `v{version} ({YYYY/MM/DD HH:mm})`).
     - **Git:** Automatically stages updated files for the version commit.
 
+> [!IMPORTANT]
+> **Agent Rule:** When modifying any site content (HTML, CSS, JS), you **MUST** run `npm version patch` (or minor/major) before pushing. This is critical because `sw.js` relies on the version string in `CACHE_NAME` to invalidate the old cache. If you skip this, users will simply see the old cached version forever.
+
 ### Deployment Pipeline
 - **Target:** [fly.io](https://fly.io)
 - **Production URL:** [https://moukaeritai.work/](https://moukaeritai.work/)
