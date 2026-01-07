@@ -1,0 +1,5 @@
+feat: setup automated versioning and update notifications
+
+- Add npm version script (update-version.js) to sync cache name and UI version
+- Add user-controlled Service Worker update flow (toast notification)
+- Update AGENTS.md with new policies

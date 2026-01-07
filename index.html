@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
     <meta name="theme-color" content="#0d1117">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <header>
         <nav>
@@ -64,7 +66,8 @@
                 <h3>./gas</h3>
                 <p>Google Apps Script utilities and automation tools.</p>
             </a>
-            <a href="https://script.google.com/macros/s/AKfycbyMZbdLYodeSIYINsaaia6s06PqqF5Yvj80wj-zlDpd14Ef-C8CH8puoKAL7voUI73Z/exec" class="card">
+            <a href="https://script.google.com/macros/s/AKfycbyMZbdLYodeSIYINsaaia6s06PqqF5Yvj80wj-zlDpd14Ef-C8CH8puoKAL7voUI73Z/exec"
+                class="card">
                 <h3>./gas-webapp</h3>
                 <p>Direct access to the deployed Google Apps Script Web App.</p>
             </a>
@@ -82,13 +85,20 @@
     <footer id="contact">
         <p>&copy; 2025 Takashi SASAKI. All systems operational.</p>
         <p>
-            <a href="https://github.com/TakashiSasaki">GitHub</a> &bull; 
-            <a href="https://x.com/TakashiSasaki">X (Twitter)</a> &bull; 
-            <a href="https://fly.io/dashboard">Fly.io</a> &bull; 
-            <a href="https://github.com/codespaces">Codespaces</a>
+            <a href="https://github.com/TakashiSasaki">GitHub</a> &bull;
+            <a href="https://x.com/TakashiSasaki">X (Twitter)</a> &bull;
+            <a href="https://fly.io/dashboard">Fly.io</a> &bull;
+            <a href="https://github.com/codespaces">Codespaces</a><br>
+            <span id="app-version-display" style="font-size: 0.8em; opacity: 0.7;">v0.0.0</span>
         </p>
     </footer>
 
     <script src="script.js"></script>
+    <div id="update-toast" class="toast hidden">
+        <p>A new version is available.</p>
+        <button id="update-btn">Update</button>
+        <button id="dismiss-btn">Dismiss</button>
+    </div>
 </body>
+
 </html>
