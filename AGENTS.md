@@ -1,48 +1,60 @@
-# Agent Decisions
+# Agent Decision Log & Project Guidelines
 
-## Versioning & Deployment Workflow
+This document tracks architectural decisions, workflows, and infrastructure details for the `moukaeritai.work` project.
 
-**Decision:** Automated Cache & UI Versioning via `npm version`.
+---
+
+## 1. Versioning & CI/CD Workflow
+
+### Automated Versioning
+**Decision:** Single source of truth versioning via `package.json`.
 
 **Workflow:**
-1.  **System of Record:** `package.json`'s `version` field is the single source of truth for the project version (Semantic Versioning).
-2.  **Trigger:** Developers use `npm version [patch|minor|major]` to increment the version.
-3.  **Automation (`update-version.js`):**
-    *   This script runs automatically as a `version` npm script hook.
-    *   **Cache Name:** Updates `CACHE_NAME` in `sw.js` to format: `moukaeritai-v{version}-{YYYYMMDDHHmmss}`.
-    *   **UI Display:** Updates the version display in `index.html` (footer) to format: `v{version} ({YYYY/MM/DD HH:mm})`.
-    *   **Git:** Automatically stages (`git add`) modified files so they are included in the version commit and tag created by npm.
+- **System of Record:** The `version` field in `package.json` follows Semantic Versioning (SemVer).
+- **Trigger:** Use `npm version [patch|minor|major]` to increment.
+- **Automation (`update-version.js`):**
+    - Runs automatically via the `version` npm hook.
+    - **Service Worker:** Updates `CACHE_NAME` in `sw.js` (Format: `moukaeritai-v{version}-{timestamp}`).
+    - **UI:** Updates the footer version string in `index.html` (Format: `v{version} ({YYYY/MM/DD HH:mm})`).
+    - **Git:** Automatically stages updated files for the version commit.
 
-**Reasoning:**
-*   Ensures strict synchronization between the project version, the Service Worker cache, and the visible version on the site.
-*   "Cache Name = Site Version" simplifies debugging and user support.
-*   Automating the process eliminates human error (forgetting to update cache name).
+### Deployment Pipeline
+- **Target:** [fly.io](https://fly.io)
+- **Production URL:** [https://moukaeritai.work/](https://moukaeritai.work/)
+- **Repository:** [GitHub - TakashiSasaki/moukaeritai.work](https://github.com/TakashiSasaki/moukaeritai.work)
+- **Trigger:** Automated deployment occurs on every push to the `main` branch.
+- **Infrastructure:** Identified by `fly.toml` and `Dockerfile`.
 
-## Service Worker Update Strategy (PWA)
+---
 
-**Decision:** Active User Prompt for Updates.
+## 2. PWA & Service Worker Strategy
+
+### Update Protocol
+**Decision:** User-controlled update activation (no automatic `skipWaiting`).
 
 **Implementation:**
-1.  **No Auto-Skip:** `sw.js` does NOT automatically `skipWaiting()` on install. It waits for user confirmation.
-2.  **UI Notification:** `script.js` detects `updatefound` (new SW waiting) and displays a Toast notification in the bottom right: "A new version is available. [Update] [Dismiss]".
-3.  **User Action:** Clicking [Update] sends a `SKIP_WAITING` message to the Service Worker.
-4.  **Reload:** Upon `controllerchange`, the page automatically reloads to serve the fresh content.
+- **Controlled Activation:** The Service Worker waits in the `installed` state.
+- **User Notification:** `script.js` listens for `updatefound`. When a new version is detected, a Toast notification appears: *"A new version is available. [Update] [Dismiss]"*.
+- **Activation:** Clicking **[Update]** sends `SKIP_WAITING` to the SW.
+- **Refresh:** The page reloads automatically upon `controllerchange`.
 
 **Reasoning:**
-*   Prevents "stale content" issues common in PWAs.
-*   Avoids disrupting the user's current session by reloading without permission.
-*   Provides a clear, app-like update experience.
+- Eliminates "stale content" while avoiding session disruption.
+- Provides a native app-like experience for updates.
 
-## Deployment Platform
+---
 
-*   **Target:** Fly.io
-*   **Identification:** Presence of `fly.toml` and `Dockerfile`.
-*   **Trigger:** Pushing to the `main` branch of the GitHub repository triggers the deployment (as per `README.md`).
+## 3. Interaction & Experimental Features
 
+### Unified Input Handling
+**Decision:** Use Pointer Events for all draggable/interactive components.
 
-# その他
+**Guidelines:**
+- Use `pointerdown`, `pointermove`, and `pointerup` to unify Mouse and Touch handling.
+- Implement `setPointerCapture` for drag interactions to maintain control even when the pointer leaves the target element.
+- Use `requestAnimationFrame` for UI updates to ensure performance and prevent input lag.
 
-このリポジトリは fly.io で https://moukaeritai.work/ として公開される。
-https://github.com/TakashiSasaki/moukaeritai.work
-の main リポジトリにプッシュすると自動的にデプロイされる。
-
+### Infinite "Ring" Carousels
+- **Logic:** Fixed DOM element recycling. 
+- **Behavior:** Items shifted off-canvas are moved to the opposite end of the track with persistent labels.
+- **Coordination:** Use persistent `(Row, Index)` labels for unique identification of elements within experimental layouts.
