@@ -24,7 +24,7 @@ class RingCarouselItem extends HTMLElement {
                 width: ${size}px;
                 height: ${size}px;
                 background-color: ${color};
-                border: 1px solid #0d1117;
+                border: 1px solid #161b22;
                 color: white;
                 font-weight: bold;
                 flex-shrink: 0;
