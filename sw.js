@@ -33,7 +33,17 @@ self.addEventListener('fetch', (event) => {
         }
         // Fix for "redirect mode is not follow" error on navigation
         if (event.request.mode === 'navigate') {
-          return fetch(event.request.url);
+          return fetch(event.request.url).then((response) => {
+            // If redirected, create a new Response to strip the 'redirected' flag
+            if (response.redirected) {
+              return new Response(response.body, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers
+              });
+            }
+            return response;
+          });
         }
         return fetch(event.request);
       })
