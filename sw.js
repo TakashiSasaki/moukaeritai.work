@@ -1,24 +1,55 @@
-const CACHE_NAME = 'moukaeritai-20251222090000';
+const CACHE_NAME = 'moukaeritai-v0.1.17-20260108085014';
 const ASSETS = [
   '/',
   '/index.html',
   '/style.css',
   '/script.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/experimental-layout-1.html',
+  '/components/ring-carousel-item.js',
+  '/components/ring-carousel.js'
 ];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  // skipWaiting is now triggered by UI interaction
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(ASSETS))
   );
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Helper to clean response
+const cleanResponse = (response) => {
+  if (!response.redirected) return response;
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  });
+};
+
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
-      .then((response) => response || fetch(event.request))
+      .then((response) => {
+        if (response) {
+          return cleanResponse(response);
+        }
+
+        // Fix for "redirect mode is not follow" error on navigation
+        if (event.request.mode === 'navigate') {
+          return fetch(event.request.url).then(cleanResponse);
+        }
+
+        return fetch(event.request);
+      })
   );
 });
 
