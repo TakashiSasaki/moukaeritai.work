@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Firebase Auth Test (Anonymous -> Google Upgrade)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      margin: 24px;
+      line-height: 1.4;
+    }
+    button {
+      padding: 8px 14px;
+      margin-right: 8px;
+      cursor: pointer;
+    }
+    pre {
+      background: #f6f8fa;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      overflow: auto;
+    }
+    .ok { color: #0f766e; }
+    .ng { color: #b91c1c; }
+    .warn { color: #d97706; }
+    .box {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    #google-profile-img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-left: 10px;
+      vertical-align: middle;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div style="margin-bottom: 20px;">
+    <a href="./index.html">Top</a>
+  </div>
+  <h1>Firebase Authentication Upgrade Test</h1>
+  <p>Anonymous Login -> Upgrade to Google Account</p>
+
+  <div class="box">
+    <h3>1. Anonymous Login</h3>
+    <button id="btnAnonSignIn">Sign In Anonymously</button>
+  </div>
+
+  <div class="box">
+    <h3>2. Upgrade (Link Account)</h3>
+    <button id="btnLinkGoogle">Link with Google</button>
+    <p style="font-size: 0.9em; color: #666;">Note: Requires being logged in anonymously first.</p>
+  </div>
+
+  <div class="box">
+    <h3>Controls</h3>
+    <button id="btnSignOut">Sign Out</button>
+  </div>
+
+  <div class="box">
+    <h3>Current Status</h3>
+    <div>
+        Status: <span id="status" class="ng">Not Signed In</span>
+        <img id="google-profile-img" src="" alt="Profile">
+    </div>
+    <div style="margin-top: 10px;">
+        UID: <code id="uid-display">---</code>
+    </div>
+    <div style="margin-top: 5px;">
+        Is Anonymous: <code id="is-anon-display">---</code>
+    </div>
+  </div>
+
+  <div class="box">
+    <h3>User Object Dump</h3>
+    <pre id="currentUserView">{}</pre>
+  </div>
+
+  <div class="box">
+    <h3>Logs</h3>
+    <pre id="logView"></pre>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInAnonymously,
+      GoogleAuthProvider,
+      linkWithPopup,
+      signOut,
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+    import { firebaseConfig } from "./firebaseConfig.js";
+
+    const statusEl = document.getElementById("status");
+    const uidDisplay = document.getElementById("uid-display");
+    const isAnonDisplay = document.getElementById("is-anon-display");
+    const currentUserView = document.getElementById("currentUserView");
+    const logView = document.getElementById("logView");
+    const profileImg = document.getElementById("google-profile-img");
+    
+    const btnAnonSignIn = document.getElementById("btnAnonSignIn");
+    const btnLinkGoogle = document.getElementById("btnLinkGoogle");
+
+    function log(message, data) {
+      const line =
+        `[${new Date().toISOString()}] ` +
+        message +
+        (data ? " " + JSON.stringify(data, null, 2) : "");
+      logView.textContent += line + "\n";
+      logView.scrollTop = logView.scrollHeight;
+    }
+
+    function renderCurrentUser(user) {
+      if (!user) {
+        currentUserView.textContent = "null";
+        statusEl.textContent = "Not Signed In";
+        statusEl.className = "ng";
+        uidDisplay.textContent = "---";
+        isAnonDisplay.textContent = "---";
+        profileImg.style.display = 'none';
+        
+        btnAnonSignIn.disabled = false;
+        btnLinkGoogle.disabled = true;
+        return;
+      }
+
+      const view = {
+        uid: user.uid,
+        isAnonymous: user.isAnonymous,
+        email: user.email,
+        displayName: user.displayName,
+        providerData: user.providerData,
+        metadata: user.metadata,
+      };
+
+      currentUserView.textContent = JSON.stringify(view, null, 2);
+      
+      uidDisplay.textContent = user.uid;
+      isAnonDisplay.textContent = user.isAnonymous;
+      
+      if (user.isAnonymous) {
+          statusEl.textContent = "Signed In (Anonymous)";
+          statusEl.className = "warn";
+          btnAnonSignIn.disabled = true;
+          btnLinkGoogle.disabled = false;
+      } else {
+          statusEl.textContent = "Signed In (Registered)";
+          statusEl.className = "ok";
+          btnAnonSignIn.disabled = true;
+          // Usually we disable link button if already linked, but for testing we leave it or check providerData
+          const isGoogleLinked = user.providerData.some(p => p.providerId === 'google.com');
+          btnLinkGoogle.disabled = isGoogleLinked;
+          if (isGoogleLinked) {
+              btnLinkGoogle.textContent = "Google Linked (Done)";
+          }
+      }
+
+      if (user.photoURL) {
+        profileImg.src = user.photoURL;
+        profileImg.style.display = 'inline-block';
+      } else {
+        profileImg.style.display = 'none';
+      }
+    }
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Monitor Auth State
+    onAuthStateChanged(auth, (user) => {
+      renderCurrentUser(user);
+      log("onAuthStateChanged", user ? { uid: user.uid, isAnonymous: user.isAnonymous } : "null");
+    });
+
+    // 1. Anonymous Login
+    btnAnonSignIn.addEventListener("click", async () => {
+      try {
+        log("signInAnonymously: start");
+        const cred = await signInAnonymously(auth);
+        log("signInAnonymously: success", { uid: cred.user.uid });
+      } catch (e) {
+        log("signInAnonymously: error", e);
+      }
+    });
+
+    // 2. Link with Google
+    btnLinkGoogle.addEventListener("click", async () => {
+        if (!auth.currentUser) {
+            log("Error: No user to link");
+            return;
+        }
+
+        try {
+            log("linkWithPopup(Google): start");
+            const provider = new GoogleAuthProvider();
+            
+            // This is the core logic for upgrading
+            const result = await linkWithPopup(auth.currentUser, provider);
+            
+            const credential = GoogleAuthProvider.credentialFromResult(result);
+            const user = result.user;
+            
+            log("linkWithPopup(Google): success", {
+                uid: user.uid,
+                isAnonymous: user.isAnonymous, // Should be false now
+                email: user.email
+            });
+            
+        } catch (e) {
+            log("linkWithPopup(Google): error", {
+                code: e.code,
+                message: e.message
+            });
+            if (e.code === 'auth/credential-already-in-use') {
+                log("HINT: This Google account is already linked to another user.");
+            }
+        }
+    });
+
+    // Sign Out
+    document.getElementById("btnSignOut").addEventListener("click", async () => {
+      try {
+        log("signOut: start");
+        await signOut(auth);
+        log("signOut: done");
+        // Reset button text
+        btnLinkGoogle.textContent = "Link with Google";
+      } catch (e) {
+        log("signOut: error", e);
+      }
+    });
+
+    log("test-auth-upgrade.html initialized");
+  </script>
+</body>
+</html>
