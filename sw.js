@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moukaeritai-v0.1.24-20260114002326';
+const CACHE_NAME = 'moukaeritai-v0.2.0-20260114071500';
 const ASSETS = [
   '/',
   '/index.html',
@@ -7,7 +7,8 @@ const ASSETS = [
   '/manifest.json',
   '/experimental-layout-1.html',
   '/components/ring-carousel-item.js',
-  '/components/ring-carousel.js'
+  '/components/ring-carousel.js',
+  '/pictgram/64x64.webp/slate_teal.webp'
 ];
 
 self.addEventListener('install', (event) => {
