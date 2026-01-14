@@ -65,6 +65,10 @@ document.addEventListener('DOMContentLoaded', () => {
             .then((registration) => {
                 console.log('Service Worker registered with scope:', registration.scope);
 
+                // Force an update check immediately to ensure the user gets the latest version
+                // This is especially useful for "pull-to-refresh" scenarios
+                registration.update();
+
                 // Helper to show update toast
                 const showUpdateToast = (worker) => {
                     const toast = document.getElementById('update-toast');
