@@ -114,6 +114,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveBtn = document.getElementById('save-uuid');
     const saveStatus = document.getElementById('save-status');
 
+    // --- Maintenance: Reset Cache ---
+    const resetCacheBtn = document.getElementById('reset-cache-btn');
+    if (resetCacheBtn) {
+        resetCacheBtn.addEventListener('click', async () => {
+            if (!confirm('This will clear all offline data and reload the page. Continue?')) {
+                return;
+            }
+
+            try {
+                // 1. Unregister Service Worker
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                    }
+                }
+
+                // 2. Delete Caches
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    for (const key of keys) {
+                        await caches.delete(key);
+                    }
+                }
+
+                // 3. Reload
+                window.location.reload(true);
+            } catch (error) {
+                console.error('Failed to reset cache:', error);
+                alert('Failed to reset cache. Please try manually clearing your browser data.');
+            }
+        });
+    }
+
     /**
      * Extracts 32 hex characters and returns normalized UUID format.
      * @param {string} str 
