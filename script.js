@@ -67,7 +67,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Force an update check immediately to ensure the user gets the latest version
                 // This is especially useful for "pull-to-refresh" scenarios
-                registration.update();
+                registration.update().then(() => {
+                    const now = new Date();
+                    const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                    const display = document.getElementById('last-checked-display');
+                    if (display) {
+                        display.style.display = 'inline';
+                        display.textContent = `Checked: ${timeString}`;
+                        // Flash effect to indicate activity
+                        display.style.color = '#27c93f';
+                        setTimeout(() => { display.style.color = 'inherit'; }, 1000);
+                    }
+                }).catch(() => {
+                     // Offline or check failed
+                     const display = document.getElementById('last-checked-display');
+                     if (display) {
+                        display.style.display = 'inline';
+                        display.textContent = `Offline`;
+                        display.style.color = '#da3633';
+                     }
+                });
 
                 // Helper to show update toast
                 const showUpdateToast = (worker) => {
