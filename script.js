@@ -65,26 +65,50 @@ document.addEventListener('DOMContentLoaded', () => {
             .then((registration) => {
                 console.log('Service Worker registered with scope:', registration.scope);
 
+                // Helper to update the UI
+                const updateLastCheckedUI = (dateString, isOffline = false) => {
+                    const display = document.getElementById('last-checked-display');
+                    if (display && dateString) {
+                        display.style.display = 'inline';
+                        display.textContent = `Checked: ${dateString}${isOffline ? ' (Offline)' : ''}`;
+                        if (!isOffline) {
+                            display.style.color = '#27c93f';
+                            setTimeout(() => { display.style.color = 'inherit'; }, 1000);
+                        } else {
+                             display.style.color = '#da3633';
+                        }
+                    }
+                };
+
+                // 1. Restore last checked time from storage immediately
+                const lastSaved = localStorage.getItem('last_update_check');
+                if (lastSaved) {
+                    updateLastCheckedUI(lastSaved, true); // Assume possibly offline until proven otherwise
+                }
+
                 // Force an update check immediately to ensure the user gets the latest version
                 // This is especially useful for "pull-to-refresh" scenarios
                 registration.update().then(() => {
                     const now = new Date();
                     const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-                    const display = document.getElementById('last-checked-display');
-                    if (display) {
-                        display.style.display = 'inline';
-                        display.textContent = `Checked: ${timeString}`;
-                        // Flash effect to indicate activity
-                        display.style.color = '#27c93f';
-                        setTimeout(() => { display.style.color = 'inherit'; }, 1000);
-                    }
+                    
+                    // Save to storage
+                    localStorage.setItem('last_update_check', timeString);
+                    
+                    // Update UI (fresh success)
+                    updateLastCheckedUI(timeString, false);
                 }).catch(() => {
-                     // Offline or check failed
-                     const display = document.getElementById('last-checked-display');
-                     if (display) {
-                        display.style.display = 'inline';
-                        display.textContent = `Offline`;
-                        display.style.color = '#da3633';
+                     // Offline or check failed - keep showing the last saved time but maybe indicate offline status explicitly if needed
+                     const lastSaved = localStorage.getItem('last_update_check');
+                     if (lastSaved) {
+                        updateLastCheckedUI(lastSaved, true);
+                     } else {
+                         const display = document.getElementById('last-checked-display');
+                         if (display) {
+                             display.style.display = 'inline';
+                             display.textContent = 'Offline';
+                             display.style.color = '#da3633';
+                         }
                      }
                 });
 
