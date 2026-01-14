@@ -19,7 +19,16 @@ This document tracks architectural decisions, workflows, and infrastructure deta
     - **Git:** Automatically stages updated files for the version commit.
 
 > [!IMPORTANT]
-> **Agent Rule:** When modifying any site content (HTML, CSS, JS), you **MUST** run `npm version patch` (or minor/major) before pushing. This is critical because `sw.js` relies on the version string in `CACHE_NAME` to invalidate the old cache. If you skip this, users will simply see the old cached version forever.
+> **Agent Rule:** When modifying any site content (HTML, CSS, JS), you **MUST** bump the version.
+>
+> **Protocol:**
+> 1. **Preferred Method:** Run `npm version patch` (or minor/major). This script automatically updates:
+>    - `package.json`: Increments version.
+>    - `sw.js`: Updates `CACHE_NAME` with new version and timestamp.
+>    - `index.html`: Updates the footer version display.
+> 2. **Manual Fallback:** If the script fails or is unavailable, you must MANUALLY update all three files (`package.json`, `sw.js`, `index.html`) to ensure consistency and cache invalidation.
+>
+> **Why?** `sw.js` relies on the version string in `CACHE_NAME` to invalidate the old cache. If you skip this, users will simply see the old cached version forever.
 
 ### Deployment Pipeline
 - **Target:** [fly.io](https://fly.io)
