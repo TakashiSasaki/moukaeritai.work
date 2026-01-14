@@ -144,10 +144,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Register Service Worker for PWA
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-            .then((registration) => {
+    // --- Service Worker Logic ---
+    const swToggle = document.getElementById('sw-toggle');
+    const swStorageKey = 'sw_enabled';
+
+    async function manageServiceWorker(enable) {
+        if (!('serviceWorker' in navigator)) return;
+
+        if (enable) {
+            // Register
+            try {
+                const registration = await navigator.serviceWorker.register('./sw.js');
                 console.log('Service Worker registered with scope:', registration.scope);
 
                 // Helper to update the UI
@@ -222,11 +229,56 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 });
-            })
-            .catch((error) => {
-                console.log('Service Worker registration failed:', error);
-            });
+            } catch (error) {
+                 console.log('Service Worker registration failed:', error);
+            }
+        } else {
+            // Unregister
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const registration of registrations) {
+                    await registration.unregister();
+                }
+                console.log('Service Worker unregistered');
+                
+                // Clear cache if desired, or leave it until explicit reset
+                // For "disable offline mode", unregistering is the main step. 
+                // We won't clear caches automatically here to avoid aggressive data loss unless requested via "Force Reset".
+            } catch (error) {
+                console.error('Service Worker unregistration failed:', error);
+            }
+        }
+    }
 
+    // Initialize Switch
+    const savedSWState = localStorage.getItem(swStorageKey);
+    // Default to true if not set
+    const isSWEnabled = savedSWState === null ? true : (savedSWState === 'true');
+
+    if (swToggle) {
+        swToggle.checked = isSWEnabled;
+        swToggle.addEventListener('change', () => {
+            const newState = swToggle.checked;
+            localStorage.setItem(swStorageKey, newState);
+            manageServiceWorker(newState);
+            
+            if (!newState) {
+                // If turning off, maybe give a hint? 
+                // But unregistering is silent.
+            }
+        });
+    }
+
+    // Run initial logic
+    if (isSWEnabled) {
+        manageServiceWorker(true);
+    } else {
+        // Ensure it is off
+        manageServiceWorker(false);
+    }
+    
+    // Ensure the page reloads when the new SW takes control (global listener)
+    if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             window.location.reload();
         });
