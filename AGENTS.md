@@ -39,7 +39,26 @@ This document tracks architectural decisions, workflows, and infrastructure deta
 
 ---
 
-## 2. PWA & Service Worker Strategy
+## 2. Core Architecture & Navigation
+
+### Single Page Application (SPA)
+**Decision:** Hash-based client-side routing.
+
+**Implementation:**
+- **Structure:** `index.html` contains all logical views (Home, Projects, Bookmarks, Personalize) as separate `<div id="view-name" class="spa-view">` elements.
+- **Routing:** `script.js` listens to the `hashchange` event (and on load) to toggle visibility by adding/removing the `.hidden` utility class.
+- **State:** The application state is primarily transient (DOM), with some persistence in `localStorage` for settings (UUID, Service Worker preference).
+
+### Data Management
+**Decision:** Separation of static content data from presentation.
+
+**Implementation:**
+- **Bookmarks:** Links and metadata are stored in `bookmarks.json` and dynamically rendered into the DOM by `script.js`.
+- **Extensibility:** Future lists or structured data should follow this pattern (JSON + Fetch) to maintain a clean `index.html`.
+
+---
+
+## 3. PWA & Service Worker Strategy
 
 ### Update Protocol
 **Decision:** User-controlled update activation (no automatic `skipWaiting`).
@@ -54,9 +73,15 @@ This document tracks architectural decisions, workflows, and infrastructure deta
 - Eliminates "stale content" while avoiding session disruption.
 - Provides a native app-like experience for updates.
 
+### Maintenance Rule
+> [!IMPORTANT]
+> **Agent Rule:** When adding NEW files (HTML, JS, CSS, JSON, Images) to the project:
+> 1. **Update `ASSETS`:** You **MUST** manually add the relative path to the `ASSETS` array in `sw.js`.
+> 2. **Verification:** Failur to do this will result in the new file being unavailable in Offline Mode.
+
 ---
 
-## 3. Interaction & Experimental Features
+## 4. Interaction & Experimental Features
 
 ### Unified Input Handling
 **Decision:** Use Pointer Events for all draggable/interactive components.

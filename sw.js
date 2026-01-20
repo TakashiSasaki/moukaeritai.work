@@ -5,6 +5,7 @@ const ASSETS = [
   '/style.css',
   '/script.js',
   '/manifest.json',
+  '/bookmarks.json',
   '/experimental-layout-1.html',
   '/components/ring-carousel-item.js',
   '/components/ring-carousel.js',
