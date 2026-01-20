@@ -6,7 +6,7 @@ const ASSETS = [
   '/script.js',
   '/manifest.json',
   '/bookmarks.json',
-  '/experimental-layout-1.html',
+  '/experiments/experimental-layout-1.html',
   '/components/ring-carousel-item.js',
   '/components/ring-carousel.js',
   '/pictgram/64x64.webp/slate_teal.webp'
