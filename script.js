@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const routes = {
         '': 'home',
         '#projects': 'projects',
+        '#bookmarks': 'bookmarks',
         '#personalize': 'personalize',
         '#misc': 'misc'
     };
@@ -252,8 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize Switch
     const savedSWState = localStorage.getItem(swStorageKey);
-    // Default to true if not set
-    const isSWEnabled = savedSWState === null ? true : (savedSWState === 'true');
+    // Default to false if not set
+    const isSWEnabled = savedSWState === null ? false : (savedSWState === 'true');
 
     if (swToggle) {
         swToggle.checked = isSWEnabled;
