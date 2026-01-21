@@ -410,4 +410,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- Fetch Header Info (Last-Modified / ETag) ---
+    fetch('index.html', { method: 'HEAD' })
+        .then(response => {
+            const lastModified = response.headers.get('last-modified');
+            const etag = response.headers.get('etag');
+            
+            const versionDisplay = document.getElementById('app-version-display');
+            if (versionDisplay) {
+                let extraInfo = '';
+                if (lastModified) {
+                    // Format Date nicely if possible, or just show raw
+                    const date = new Date(lastModified);
+                    const formattedDate = !isNaN(date.getTime()) 
+                        ? date.toLocaleString() 
+                        : lastModified;
+                    extraInfo += ` | LM: ${formattedDate}`;
+                }
+                if (etag) {
+                    // ETag often has quotes, strip them for cleaner look if desired, or keep
+                    extraInfo += ` | ETag: ${etag.replace(/"/g, '')}`;
+                }
+
+                if (extraInfo) {
+                    const infoSpan = document.createElement('span');
+                    infoSpan.style.marginLeft = '10px';
+                    infoSpan.style.fontSize = '0.9em'; 
+                    infoSpan.textContent = extraInfo;
+                    versionDisplay.parentNode.insertBefore(infoSpan, versionDisplay.nextSibling);
+                }
+            }
+        })
+        .catch(console.error);
 });
