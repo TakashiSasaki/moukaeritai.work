@@ -131,10 +131,6 @@ function initCacheLogic() {
     const resetCacheBtn = document.getElementById('reset-cache-btn');
     if (resetCacheBtn) {
         resetCacheBtn.addEventListener('click', async () => {
-            if (!confirm('This will clear all offline data and reload the page. Continue?')) {
-                return;
-            }
-
             try {
                 if ('serviceWorker' in navigator) {
                     const registrations = await navigator.serviceWorker.getRegistrations();
