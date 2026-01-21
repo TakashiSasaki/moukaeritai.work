@@ -173,102 +173,99 @@ document.addEventListener('DOMContentLoaded', () => {
     async function manageServiceWorker(enable) {
         if (!('serviceWorker' in navigator)) return;
 
-        if (enable) {
-            // Register
-            try {
-                const registration = await navigator.serviceWorker.register('./sw.js');
-                console.log('Service Worker registered with scope:', registration.scope);
+        try {
+            const registration = await navigator.serviceWorker.register('./sw.js');
+            console.log('Service Worker registered with scope:', registration.scope);
 
-                // Helper to update the UI
-                const updateLastCheckedUI = (dateString, isOffline = false) => {
-                    const display = document.getElementById('last-checked-display');
-                    if (display && dateString) {
-                        display.style.display = 'inline';
-                        display.textContent = `Checked: ${dateString}${isOffline ? ' (Offline)' : ''}`;
-                        if (!isOffline) {
-                            display.style.color = '#27c93f';
-                            setTimeout(() => { display.style.color = 'inherit'; }, 1000);
-                        } else {
-                             display.style.color = '#da3633';
-                        }
+            // Send State to SW
+            const sendState = () => {
+                const target = registration.active || navigator.serviceWorker.controller;
+                if (target) {
+                    target.postMessage({ type: 'SET_OFFLINE_MODE', value: enable });
+                }
+            };
+
+            if (registration.active) sendState();
+            navigator.serviceWorker.ready.then(reg => {
+                if (reg.active) reg.active.postMessage({ type: 'SET_OFFLINE_MODE', value: enable });
+            });
+
+            // Helper to update the UI
+            const updateLastCheckedUI = (dateString, isOffline = false) => {
+                const display = document.getElementById('last-checked-display');
+                if (display && dateString) {
+                    display.style.display = 'inline';
+                    display.textContent = `Checked: ${dateString}${isOffline ? ' (Offline)' : ''}`;
+                    if (!isOffline) {
+                        display.style.color = '#27c93f';
+                        setTimeout(() => { display.style.color = 'inherit'; }, 1000);
+                    } else {
+                         display.style.color = '#da3633';
                     }
-                };
-
-                // 1. Restore last checked time from storage immediately
-                const lastSaved = localStorage.getItem('last_update_check');
-                if (lastSaved) {
-                    updateLastCheckedUI(lastSaved, true);
                 }
+            };
 
-                // Force an update check immediately
-                registration.update().then(() => {
-                    const now = new Date();
-                    const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-                    
-                    localStorage.setItem('last_update_check', timeString);
-                    updateLastCheckedUI(timeString, false);
-                }).catch(() => {
-                     const lastSaved = localStorage.getItem('last_update_check');
-                     if (lastSaved) {
-                        updateLastCheckedUI(lastSaved, true);
-                     } else {
-                         const display = document.getElementById('last-checked-display');
-                         if (display) {
-                             display.style.display = 'inline';
-                             display.textContent = 'Offline';
-                             display.style.color = '#da3633';
-                         }
-                     }
-                });
-
-                // Helper to show update toast
-                const showUpdateToast = (worker) => {
-                    const toast = document.getElementById('update-toast');
-                    const updateBtn = document.getElementById('update-btn');
-                    const dismissBtn = document.getElementById('dismiss-btn');
-
-                    toast.classList.remove('hidden');
-
-                    updateBtn.onclick = () => {
-                        worker.postMessage({ type: 'SKIP_WAITING' });
-                        toast.classList.add('hidden');
-                    };
-
-                    dismissBtn.onclick = () => {
-                        toast.classList.add('hidden');
-                    };
-                };
-
-                if (registration.waiting) {
-                    showUpdateToast(registration.waiting);
-                }
-
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            showUpdateToast(newWorker);
-                        }
-                    });
-                });
-            } catch (error) {
-                 console.log('Service Worker registration failed:', error);
+            // 1. Restore last checked time from storage immediately
+            const lastSaved = localStorage.getItem('last_update_check');
+            if (lastSaved) {
+                updateLastCheckedUI(lastSaved, true);
             }
-        } else {
-            // Unregister
-            try {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (const registration of registrations) {
-                    await registration.unregister();
-                }
-                console.log('Service Worker unregistered');
+
+            // Force an update check immediately
+            registration.update().then(() => {
+                const now = new Date();
+                const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
                 
-                // Clear cache if desired, or leave it until explicit reset
-                // For "disable offline mode", unregistering is the main step. 
-                // We won't clear caches automatically here to avoid aggressive data loss unless requested via "Force Reset".
-            } catch (error) {
-                console.error('Service Worker unregistration failed:', error);
+                localStorage.setItem('last_update_check', timeString);
+                updateLastCheckedUI(timeString, false);
+            }).catch(() => {
+                 const lastSaved = localStorage.getItem('last_update_check');
+                 if (lastSaved) {
+                    updateLastCheckedUI(lastSaved, true);
+                 } else {
+                     const display = document.getElementById('last-checked-display');
+                     if (display) {
+                         display.style.display = 'inline';
+                         display.textContent = 'Offline';
+                         display.style.color = '#da3633';
+                     }
+                 }
+            });
+
+            // Helper to show update toast
+            const showUpdateToast = (worker) => {
+                const toast = document.getElementById('update-toast');
+                const updateBtn = document.getElementById('update-btn');
+                const dismissBtn = document.getElementById('dismiss-btn');
+
+                if (!toast) return;
+
+                toast.classList.remove('hidden');
+
+                updateBtn.onclick = () => {
+                    worker.postMessage({ type: 'SKIP_WAITING' });
+                    toast.classList.add('hidden');
+                };
+
+                dismissBtn.onclick = () => {
+                    toast.classList.add('hidden');
+                };
+            };
+
+            if (registration.waiting) {
+                showUpdateToast(registration.waiting);
             }
+
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        showUpdateToast(newWorker);
+                    }
+                });
+            });
+        } catch (error) {
+             console.log('Service Worker registration failed:', error);
         }
     }
 
@@ -283,21 +280,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const newState = swToggle.checked;
             localStorage.setItem(swStorageKey, newState);
             manageServiceWorker(newState);
-            
-            if (!newState) {
-                // If turning off, maybe give a hint? 
-                // But unregistering is silent.
-            }
         });
     }
 
-    // Run initial logic
-    if (isSWEnabled) {
-        manageServiceWorker(true);
-    } else {
-        // Ensure it is off
-        manageServiceWorker(false);
-    }
+    // Always run initial logic
+    manageServiceWorker(isSWEnabled);
     
     // Ensure the page reloads when the new SW takes control (global listener)
     if ('serviceWorker' in navigator) {

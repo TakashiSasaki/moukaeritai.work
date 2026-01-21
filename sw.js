@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moukaeritai-v0.2.0-20260115015748';
+const CACHE_NAME = 'moukaeritai-v0.2.1-20260121';
 const ASSETS = [
   '/',
   '/index.html',
@@ -12,6 +12,8 @@ const ASSETS = [
   '/pictgram/64x64.webp/slate_teal.webp'
 ];
 
+let isOfflineModeEnabled = false;
+
 self.addEventListener('install', (event) => {
   // skipWaiting is now triggered by UI interaction
   event.waitUntil(
@@ -21,8 +23,13 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+  if (event.data) {
+    if (event.data.type === 'SKIP_WAITING') {
+      self.skipWaiting();
+    }
+    if (event.data.type === 'SET_OFFLINE_MODE') {
+      isOfflineModeEnabled = event.data.value;
+    }
   }
 });
 
@@ -38,6 +45,10 @@ const cleanResponse = (response) => {
 };
 
 self.addEventListener('fetch', (event) => {
+  if (!isOfflineModeEnabled) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
