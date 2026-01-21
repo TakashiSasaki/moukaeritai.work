@@ -3,6 +3,7 @@
     "title": "💎 Gemini Gems",
     "url": "https://gemini.google.com/gems/view",
     "description": "Access and manage your custom Gemini Gems collection.",
+    "emoji": "🤖💎",
     "icon": "M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z",
     "keywords": ["ai", "gemini", "google", "gems", "assistant"]
   },
@@ -10,6 +11,7 @@
     "title": "✨ Gemini App",
     "url": "https://gemini.google.com/app",
     "description": "Chat with the Gemini AI assistant directly.",
+    "emoji": "🤖✨",
     "icon": "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z",
     "keywords": ["ai", "gemini", "google", "chat", "assistant"]
   },
@@ -17,6 +19,7 @@
     "title": "💻 mcp.moukaeritai.work",
     "url": "https://github.com/codespaces/obscure-orbit-rv96gvvpxhpqq5",
     "description": "Edit mcp.moukaeritai.work via GitHub Codespaces (VS Code Remote).",
+    "emoji": "‍💻💻",
     "icon": "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4",
     "keywords": ["development", "github", "codespaces", "vscode", "moukaeritai"]
   },
@@ -24,6 +27,7 @@
     "title": "📜 userscript.moukaeritai.work",
     "url": "https://github.com/codespaces/fuzzy-halibut-qgr4qgggrh494p",
     "description": "Edit userscript.moukaeritai.work via GitHub Codespaces (VS Code Remote).",
+    "emoji": "👨‍💻📜",
     "icon": "M14.25 9.75v-4.5m0 4.5h4.5m-4.5 0l6-6m-3 18c-8.284 0-15-6.716-15-15V4.5A2.25 2.25 0 014.5 2.25h1.372c.516 0 .966.351 1.091.852l1.106 4.423c.11.44-.054.902-.417 1.173l-1.293.97a1.062 1.062 0 00-.38 1.21 12.035 12.035 0 007.143 7.143c.441.162.928-.004 1.21-.38l.97-1.293a1.125 1.125 0 011.173-.417l4.423 1.106c.5.125.852.575.852 1.091V19.5a2.25 2.25 0 01-2.25 2.25h-2.25z",
     "keywords": ["development", "github", "codespaces", "vscode", "moukaeritai", "userscript"]
   },
@@ -31,18 +35,23 @@
     "title": "🤖 ChatGPT",
     "url": "https://chatgpt.com/",
     "description": "OpenAI's advanced AI chatbot.",
+    "emoji": "🤖💬",
     "icon": "M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z",
     "keywords": ["ai", "openai", "chatgpt", "chat", "assistant"]
   },
   {
     "title": "GitHub Codespaces",
+    "icon": "M4 13a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7zm4 0h2v2H8v-2zm-1-4h2v2H7V9zm5 4h2v2h-2v-2zm-1-4h2v2h-2V9z",
     "url": "https://github.com/codespaces",
+    "emoji": "👨‍💻☁️",
     "description": "Your gateway to cloud-based development environments. Create, customize, and manage your Codespaces with ease.",
     "keywords": ["development", "github", "codespaces", "cloud", "IDE"]
   },
   {
     "title": "Google NotebookLM",
+    "icon": "M5 3h14l4 8H1l4-8m0 14h4v-4H5v4zm6 0h4v-4h-4v4zm6 0h4v-4h-4v4z",
     "url": "https://notebooklm.google.com/",
+    "emoji": "🤖📝",
     "description": "アクセスして Google NotebookLM を使用します。",
     "keywords": ["ai", "google", "NotebookLM", "note", "assistant"]
   },
@@ -50,6 +59,7 @@
     "title": "📧 Outlook",
     "url": "https://outlook.live.com",
     "description": "Microsoft Outlook personal email and calendar.",
+    "emoji": "✉️📧",
     "icon": "M1.5 4.5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-11Zm3.6 1L10 9.8 14.9 5.5H5.1Zm-1.6 1.4v9.6l4.8-4.8-4.8-4.8Zm13 0-4.8 4.8 4.8 4.8v-9.6Zm-11.6 6.2L10 12.2l5.1-5.1 3.4 3.4v6H5.5l-.6-.4Z",
     "keywords": ["email", "microsoft", "outlook", "calendar", "personal"]
   },
@@ -57,6 +67,7 @@
     "title": "🏢 Outlook (Work/School)",
     "url": "https://outlook.office.com",
     "description": "Microsoft Outlook for work or school accounts.",
+    "emoji": "🏢",
     "icon": "M1.5 4.5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-11Zm3.6 1L10 9.8 14.9 5.5H5.1Zm-1.6 1.4v9.6l4.8-4.8-4.8-4.8Zm13 0-4.8 4.8 4.8 4.8v-9.6Zm-11.6 6.2L10 12.2l5.1-5.1 3.4 3.4v6H5.5l-.6-.4Z",
     "keywords": ["email", "microsoft", "outlook", "calendar", "work", "school", "business"]
   },
@@ -64,6 +75,7 @@
     "title": "📋 Microsoft 365 (Office)",
     "url": "https://www.office.com",
     "description": "Access Word, Excel, PowerPoint, and more.",
+    "emoji": "🏢📋",
     "icon": "M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z",
     "keywords": ["microsoft", "office", "365", "word", "excel", "powerpoint", "productivity"]
   },
@@ -71,6 +83,7 @@
     "title": "☁️ OneDrive",
     "url": "https://onedrive.live.com",
     "description": "Microsoft OneDrive personal cloud storage.",
+    "emoji": "☁️🏠",
     "icon": "M4.5 10a4 4 0 0 1 3.55-6.32 5.5 5.5 0 0 1 9.4 1.5 3.5 3.5 0 0 1 2.55 6.32H4.5z",
     "keywords": ["storage", "cloud", "microsoft", "onedrive", "personal", "files"]
   },
@@ -78,6 +91,7 @@
     "title": "🏢 OneDrive (Work/School)",
     "url": "https://portal.office.com/onedrive",
     "description": "Microsoft OneDrive for business and school.",
+    "emoji": "🏢💼",
     "icon": "M4.5 10a4 4 0 0 1 3.55-6.32 5.5 5.5 0 0 1 9.4 1.5 3.5 3.5 0 0 1 2.55 6.32H4.5z",
     "keywords": ["storage", "cloud", "microsoft", "onedrive", "work", "school", "business", "files"]
   }
