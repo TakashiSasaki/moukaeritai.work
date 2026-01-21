@@ -420,27 +420,47 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Fetch Header Info (Last-Modified / ETag) ---
-    fetch('index.html', { method: 'HEAD' })
-        .then(response => {
-            const lastModified = response.headers.get('last-modified');
-            const etag = response.headers.get('etag');
+    // --- Fetch Header Info (Last-Modified / ETag) for ALL resources in sitemap.xml ---
+    fetch('sitemap.xml')
+        .then(response => response.text())
+        .then(xmlText => {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            const locs = xmlDoc.getElementsByTagName("loc");
+            const urls = [];
+            for (let i = 0; i < locs.length; i++) {
+                urls.push(locs[i].textContent);
+            }
+            return urls;
+        })
+        .then(async (urls) => {
+            if (urls.length === 0) return;
+
+            // Fetch headers for all URLs in parallel
+            const fetchPromises = urls.map(url => 
+                fetch(url, { method: 'HEAD' })
+                    .then(res => {
+                        const lm = res.headers.get('last-modified');
+                        return lm ? new Date(lm) : null;
+                    })
+                    .catch(e => null) // Ignore errors for individual files
+            );
+
+            const dates = await Promise.all(fetchPromises);
             
+            // Filter out nulls and find the latest date
+            const validDates = dates.filter(d => d !== null);
+            if (validDates.length === 0) return;
+
+            // Sort descending
+            validDates.sort((a, b) => b - a);
+            const latestDate = validDates[0];
+
             const versionDisplay = document.getElementById('app-version-display');
             if (versionDisplay) {
                 let extraInfo = '';
-                if (lastModified) {
-                    // Format Date nicely if possible, or just show raw
-                    const date = new Date(lastModified);
-                    const formattedDate = !isNaN(date.getTime()) 
-                        ? date.toLocaleString() 
-                        : lastModified;
-                    extraInfo += ` | LM: ${formattedDate}`;
-                }
-                if (etag) {
-                    // ETag often has quotes, strip them for cleaner look if desired, or keep
-                    extraInfo += ` | ETag: ${etag.replace(/"/g, '')}`;
-                }
+                const formattedDate = latestDate.toLocaleString();
+                extraInfo += ` | Latest Update: ${formattedDate}`;
 
                 if (extraInfo) {
                     const infoSpan = document.createElement('span');
