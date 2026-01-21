@@ -27,8 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('bookmarks.json')
             .then(response => response.json())
             .then(data => {
-                bookmarksGrid.innerHTML = data.map(item => `
-                    <a href="${item.url}" target="_blank" class="card">
+                bookmarksGrid.innerHTML = data.map(item => {
+                    let targetVal = "_blank";
+                    try {
+                        const urlObj = new URL(item.url);
+                        targetVal = urlObj.hostname;
+                    } catch (e) {
+                        // Fallback if URL parsing fails
+                    }
+                    
+                    return `
+                    <a href="${item.url}" target="${targetVal}" class="card">
                         <h3>${item.title}</h3>
                         <div style="display: flex; align-items: center; gap: 1rem; margin-top: 1rem; color: #8b949e;">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="48" height="48">
@@ -37,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p>${item.description}</p>
                         </div>
                     </a>
-                `).join('');
+                `}).join('');
             })
             .catch(err => console.error('Failed to load bookmarks:', err));
     }
