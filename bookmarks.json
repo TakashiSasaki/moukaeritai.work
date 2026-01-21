@@ -35,6 +35,18 @@
     "keywords": ["ai", "openai", "chatgpt", "chat", "assistant"]
   },
   {
+    "title": "GitHub Codespaces",
+    "url": "https://github.com/codespaces",
+    "description": "Your gateway to cloud-based development environments. Create, customize, and manage your Codespaces with ease.",
+    "keywords": ["development", "github", "codespaces", "cloud", "IDE"]
+  },
+  {
+    "title": "Google NotebookLM",
+    "url": "https://notebooklm.google.com/",
+    "description": "アクセスして Google NotebookLM を使用します。",
+    "keywords": ["ai", "google", "NotebookLM", "note", "assistant"]
+  },
+  {
     "title": "📧 Outlook",
     "url": "https://outlook.live.com",
     "description": "Microsoft Outlook personal email and calendar.",
