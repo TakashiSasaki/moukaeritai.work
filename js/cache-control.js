@@ -158,7 +158,8 @@ function initCacheLogic() {
         .then(pkg => {
             const versionDisplay = document.getElementById('app-version-display');
             if (versionDisplay && pkg.version) {
-                versionDisplay.textContent = `v${pkg.version}`;
+                const viaSW = navigator.serviceWorker && navigator.serviceWorker.controller ? ' (via SW)' : '';
+                versionDisplay.textContent = `v${pkg.version}${viaSW}`;
             }
         })
         .catch(console.error);
@@ -183,7 +184,23 @@ function initCacheLogic() {
             const serverDates = [];
             const parseDate = (header) => header ? new Date(header) : null;
 
+            // Process all URLs
+            const urlList = document.getElementById('sitemap-url-list');
+            if (urlList) urlList.innerHTML = ''; // Clear existing
+
             const promises = urls.map(async (url) => {
+                // Add to list UI
+                if (urlList) {
+                    const li = document.createElement('li');
+                    try {
+                        const urlObj = new URL(url);
+                        li.textContent = urlObj.pathname;
+                    } catch (e) {
+                        li.textContent = url;
+                    }
+                    urlList.appendChild(li);
+                }
+
                 // 1. Check Cached Version
                 if ('caches' in window) {
                     try {
