@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { firebaseConfig } from "./firebase/firebaseConfig.js";
+import { loadCacheControlUI } from "./js/cache-control.js";
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -175,166 +176,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Service Worker Logic ---
-    const swToggle = document.getElementById('sw-toggle');
-    const swStorageKey = 'sw_enabled';
-
-    async function manageServiceWorker(enable) {
-        if (!('serviceWorker' in navigator)) return;
-
-        try {
-            const registration = await navigator.serviceWorker.register('./sw.js');
-            console.log('Service Worker registered with scope:', registration.scope);
-
-            // Send State to SW
-            const sendState = () => {
-                const target = registration.active || navigator.serviceWorker.controller;
-                if (target) {
-                    target.postMessage({ type: 'SET_OFFLINE_MODE', value: enable });
-                }
-            };
-
-            if (registration.active) sendState();
-            navigator.serviceWorker.ready.then(reg => {
-                if (reg.active) reg.active.postMessage({ type: 'SET_OFFLINE_MODE', value: enable });
-            });
-
-            // Helper to update the UI
-            const updateLastCheckedUI = (dateString, isOffline = false) => {
-                const display = document.getElementById('last-checked-display');
-                if (display && dateString) {
-                    display.style.display = 'inline';
-                    display.textContent = `Checked: ${dateString}${isOffline ? ' (Offline)' : ''}`;
-                    if (!isOffline) {
-                        display.style.color = '#27c93f';
-                        setTimeout(() => { display.style.color = 'inherit'; }, 1000);
-                    } else {
-                         display.style.color = '#da3633';
-                    }
-                }
-            };
-
-            // 1. Restore last checked time from storage immediately
-            const lastSaved = localStorage.getItem('last_update_check');
-            if (lastSaved) {
-                updateLastCheckedUI(lastSaved, true);
-            }
-
-            // Force an update check immediately
-            registration.update().then(() => {
-                const now = new Date();
-                const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-                
-                localStorage.setItem('last_update_check', timeString);
-                updateLastCheckedUI(timeString, false);
-            }).catch(() => {
-                 const lastSaved = localStorage.getItem('last_update_check');
-                 if (lastSaved) {
-                    updateLastCheckedUI(lastSaved, true);
-                 } else {
-                     const display = document.getElementById('last-checked-display');
-                     if (display) {
-                         display.style.display = 'inline';
-                         display.textContent = 'Offline';
-                         display.style.color = '#da3633';
-                     }
-                 }
-            });
-
-            // Helper to show update toast
-            const showUpdateToast = (worker) => {
-                const toast = document.getElementById('update-toast');
-                const updateBtn = document.getElementById('update-btn');
-                const dismissBtn = document.getElementById('dismiss-btn');
-
-                if (!toast) return;
-
-                toast.classList.remove('hidden');
-
-                updateBtn.onclick = () => {
-                    worker.postMessage({ type: 'SKIP_WAITING' });
-                    toast.classList.add('hidden');
-                };
-
-                dismissBtn.onclick = () => {
-                    toast.classList.add('hidden');
-                };
-            };
-
-            if (registration.waiting) {
-                showUpdateToast(registration.waiting);
-            }
-
-            registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        showUpdateToast(newWorker);
-                    }
-                });
-            });
-        } catch (error) {
-             console.log('Service Worker registration failed:', error);
-        }
-    }
-
-    // Initialize Switch
-    const savedSWState = localStorage.getItem(swStorageKey);
-    // Default to false if not set
-    const isSWEnabled = savedSWState === null ? false : (savedSWState === 'true');
-
-    if (swToggle) {
-        swToggle.checked = isSWEnabled;
-        swToggle.addEventListener('change', () => {
-            const newState = swToggle.checked;
-            localStorage.setItem(swStorageKey, newState);
-            manageServiceWorker(newState);
-        });
-    }
-
-    // Always run initial logic
-    manageServiceWorker(isSWEnabled);
-    
-    // Ensure the page reloads when the new SW takes control (global listener)
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            window.location.reload();
-        });
-    }
+    // --- Service Worker Logic & UI ---
+    loadCacheControlUI('cache-control-ui-container');
 
     // --- Settings / Personal UUID Logic ---
     const uuidInput = document.getElementById('personal-uuid');
     const saveBtn = document.getElementById('save-uuid');
     const saveStatus = document.getElementById('save-status');
 
-    // --- Maintenance: Reset Cache ---
-    const resetCacheBtn = document.getElementById('reset-cache-btn');
-    if (resetCacheBtn) {
-        resetCacheBtn.addEventListener('click', async () => {
-            if (!confirm('This will clear all offline data and reload the page. Continue?')) {
-                return;
-            }
-
-            try {
-                if ('serviceWorker' in navigator) {
-                    const registrations = await navigator.serviceWorker.getRegistrations();
-                    for (const registration of registrations) {
-                        await registration.unregister();
-                    }
-                }
-                if ('caches' in window) {
-                    const keys = await caches.keys();
-                    for (const key of keys) {
-                        await caches.delete(key);
-                    }
-                }
-                window.location.reload(true);
-            } catch (error) {
-                console.error('Failed to reset cache:', error);
-                alert('Failed to reset cache. Please try manually clearing your browser data.');
-            }
-        });
-    }
+    // --- Maintenance: Reset Cache (Moved to cache-control.js) ---
 
     function normalizeUUID(str) {
         const hexOnly = str.replace(/[^0-9a-fA-F]/g, '').toLowerCase();
@@ -420,70 +270,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Fetch package.json for Version ---
-    fetch('package.json')
-        .then(response => response.json())
-        .then(pkg => {
-            const versionDisplay = document.getElementById('app-version-display');
-            if (versionDisplay && pkg.version) {
-                // Update the text content, preserving any appended info if it exists (though usually this runs first or we just set the start)
-                // Actually, the sitemap check appends a span AFTER the element.
-                // So we can safely set textContent here.
-                versionDisplay.textContent = `v${pkg.version}`;
-            }
-        })
-        .catch(console.error);
-
-    // --- Fetch Header Info (Last-Modified / ETag) for ALL resources in sitemap.xml ---
-    fetch('sitemap.xml')
-        .then(response => response.text())
-        .then(xmlText => {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-            const locs = xmlDoc.getElementsByTagName("loc");
-            const urls = [];
-            for (let i = 0; i < locs.length; i++) {
-                urls.push(locs[i].textContent);
-            }
-            return urls;
-        })
-        .then(async (urls) => {
-            if (urls.length === 0) return;
-
-            // Fetch headers for all URLs in parallel
-            const fetchPromises = urls.map(url => 
-                fetch(url, { method: 'HEAD' })
-                    .then(res => {
-                        const lm = res.headers.get('last-modified');
-                        return lm ? new Date(lm) : null;
-                    })
-                    .catch(e => null) // Ignore errors for individual files
-            );
-
-            const dates = await Promise.all(fetchPromises);
-            
-            // Filter out nulls and find the latest date
-            const validDates = dates.filter(d => d !== null);
-            if (validDates.length === 0) return;
-
-            // Sort descending
-            validDates.sort((a, b) => b - a);
-            const latestDate = validDates[0];
-
-            const versionDisplay = document.getElementById('app-version-display');
-            if (versionDisplay) {
-                let extraInfo = '';
-                const formattedDate = latestDate.toLocaleString();
-                extraInfo += ` | Latest Update: ${formattedDate}`;
-
-                if (extraInfo) {
-                    const infoSpan = document.createElement('span');
-                    infoSpan.style.marginLeft = '10px';
-                    infoSpan.style.fontSize = '0.9em'; 
-                    infoSpan.textContent = extraInfo;
-                    versionDisplay.parentNode.insertBefore(infoSpan, versionDisplay.nextSibling);
-                }
-            }
-        })
-        .catch(console.error);
+    // (System status and version checks moved to cache-control.js)
 });
