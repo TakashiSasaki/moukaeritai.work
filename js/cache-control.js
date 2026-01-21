@@ -43,7 +43,7 @@ function initCacheLogic() {
                 const display = document.getElementById('last-checked-display');
                 if (display && dateString) {
                     display.style.display = 'inline';
-                    display.textContent = `Checked: ${dateString}${isOffline ? ' (Offline)' : ''}`;
+                    display.textContent = `${dateString}${isOffline ? ' (Offline)' : ''}`;
                     if (!isOffline) {
                         display.style.color = '#27c93f';
                         setTimeout(() => { display.style.color = 'inherit'; }, 1000);
