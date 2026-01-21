@@ -420,6 +420,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Fetch package.json for Version ---
+    fetch('package.json')
+        .then(response => response.json())
+        .then(pkg => {
+            const versionDisplay = document.getElementById('app-version-display');
+            if (versionDisplay && pkg.version) {
+                // Update the text content, preserving any appended info if it exists (though usually this runs first or we just set the start)
+                // Actually, the sitemap check appends a span AFTER the element.
+                // So we can safely set textContent here.
+                versionDisplay.textContent = `v${pkg.version}`;
+            }
+        })
+        .catch(console.error);
+
     // --- Fetch Header Info (Last-Modified / ETag) for ALL resources in sitemap.xml ---
     fetch('sitemap.xml')
         .then(response => response.text())
