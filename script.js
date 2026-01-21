@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h3>${item.title}</h3>
                         <div style="display: flex; align-items: center; gap: 1rem; margin-top: 1rem; color: #8b949e;">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="48" height="48">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="${item.icon}" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="${item.visuals.iconPath}" />
                             </svg>
                             <p>${item.description}</p>
                         </div>
