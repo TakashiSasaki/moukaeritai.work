@@ -178,66 +178,86 @@ function initCacheLogic() {
             return urls;
         })
         .then(async (urls) => {
-            if (urls.length === 0) return;
-
-            const cachedDates = [];
-            const serverDates = [];
-            const parseDate = (header) => header ? new Date(header) : null;
-
-            // Process all URLs
             const urlList = document.getElementById('sitemap-url-list');
-            if (urlList) urlList.innerHTML = ''; // Clear existing
+            const checkBtn = document.getElementById('check-sitemap-server-btn');
+            
+            if (!urlList) return;
+            urlList.innerHTML = '';
 
-            const promises = urls.map(async (url) => {
-                // Add to list UI
-                if (urlList) {
-                    const li = document.createElement('li');
-                    try {
-                        const urlObj = new URL(url);
-                        li.textContent = urlObj.pathname;
-                    } catch (e) {
-                        li.textContent = url;
-                    }
-                    urlList.appendChild(li);
-                }
+            const items = [];
 
-                // 1. Check Cached Version
+            // Build List & Check Cache
+            for (const url of urls) {
+                const li = document.createElement('li');
+                li.style.marginBottom = '0.8rem';
+                li.style.borderBottom = '1px dashed #30363d';
+                li.style.paddingBottom = '0.4rem';
+
+                let displayPath = url;
+                try { displayPath = new URL(url).pathname; } catch(e){}
+
+                li.innerHTML = `
+                    <div style="color: #58a6ff; font-weight: bold;">${displayPath}</div>
+                    <div style="padding-left: 1rem; color: #8b949e;">
+                        Cached: <span class="cache-date">Checking...</span>
+                    </div>
+                    <div style="padding-left: 1rem; color: #8b949e;">
+                        Server: <span class="server-date">--</span>
+                    </div>
+                `;
+                urlList.appendChild(li);
+
+                const cacheSpan = li.querySelector('.cache-date');
+                const serverSpan = li.querySelector('.server-date');
+                items.push({ url, cacheSpan, serverSpan });
+
+                // Check Cache Immediately
                 if ('caches' in window) {
-                    try {
-                        const cachedRes = await caches.match(url);
-                        if (cachedRes) {
-                            const date = parseDate(cachedRes.headers.get('last-modified'));
-                            if (date) cachedDates.push(date);
+                    caches.match(url).then(res => {
+                        if (res && res.headers.get('last-modified')) {
+                            const d = new Date(res.headers.get('last-modified'));
+                            cacheSpan.textContent = d.toLocaleString();
+                            cacheSpan.style.color = '#c9d1d9';
+                        } else {
+                            cacheSpan.textContent = 'Not in cache';
                         }
-                    } catch (e) { console.warn('Cache check failed for', url, e); }
+                    }).catch(() => {
+                         cacheSpan.textContent = 'Error';
+                    });
+                } else {
+                    cacheSpan.textContent = 'API Unavailable';
                 }
+            }
 
-                // 2. Check Server Version (Bypass Cache)
-                try {
-                    const serverUrl = new URL(url);
-                    serverUrl.searchParams.set('_nc', Date.now()); // Cache buster
-                    const serverRes = await fetch(serverUrl.toString(), { method: 'HEAD' });
-                    const date = parseDate(serverRes.headers.get('last-modified'));
-                    if (date) serverDates.push(date);
-                } catch (e) { 
-                    // Expected if offline
-                }
-            });
+            // Setup Button Handler for Server Check
+            if (checkBtn) {
+                checkBtn.onclick = async () => {
+                    checkBtn.disabled = true;
+                    checkBtn.textContent = 'Checking...';
 
-            await Promise.all(promises);
-
-            const updateDisplay = (dates, rowId, displayId) => {
-                const row = document.getElementById(rowId);
-                const display = document.getElementById(displayId);
-                if (row && display && dates.length > 0) {
-                    dates.sort((a, b) => b - a);
-                    display.textContent = dates[0].toLocaleString();
-                    row.style.display = 'list-item';
-                }
-            };
-
-            updateDisplay(cachedDates, 'cached-update-row', 'cached-update-display');
-            updateDisplay(serverDates, 'server-update-row', 'server-update-display');
+                    for (const item of items) {
+                        item.serverSpan.textContent = 'Checking...';
+                        try {
+                            const serverUrl = new URL(item.url);
+                            serverUrl.searchParams.set('_nc', Date.now());
+                            
+                            const res = await fetch(serverUrl.toString(), { method: 'HEAD' });
+                            const lm = res.headers.get('last-modified');
+                            if (lm) {
+                                item.serverSpan.textContent = new Date(lm).toLocaleString();
+                                item.serverSpan.style.color = '#27c93f';
+                            } else {
+                                item.serverSpan.textContent = 'No Header';
+                            }
+                        } catch (e) {
+                            item.serverSpan.textContent = 'Error / Offline';
+                            item.serverSpan.style.color = '#da3633';
+                        }
+                    }
+                    checkBtn.textContent = 'Check Server Status (HEAD)';
+                    checkBtn.disabled = false;
+                };
+            }
         })
         .catch(console.error);
 }

@@ -7,15 +7,14 @@
 
             <div style="margin-top: 1rem;">
                 <h3 style="font-size: 1.1em; color: #8b949e; margin-bottom: 0.5rem;">./sitemap.xml</h3>
-                <ul style="list-style: none; color: #c9d1d9; font-size: 0.9rem; line-height: 1.6;">
-                    <li id="cached-update-row" style="display:none;">> Latest (Cached): <span id="cached-update-display">--</span></li>
-                    <li id="server-update-row" style="display:none;">> Latest (Server): <span id="server-update-display">--</span></li>
-                    <li style="margin-top: 0.5rem; color: #8b949e;">> Paths:</li>
-                    <li>
-                        <ul id="sitemap-url-list" style="list-style: none; padding-left: 1rem; color: #58a6ff; font-size: 0.85em;">
-                            <!-- Paths will be injected here -->
-                        </ul>
-                    </li>
+                <div style="margin-bottom: 0.5rem;">
+                    <button id="check-sitemap-server-btn" style="padding: 4px 8px; font-size: 0.8rem; background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px; cursor: pointer;">
+                        Check Server Status (HEAD)
+                    </button>
+                </div>
+                <ul id="sitemap-url-list" style="list-style: none; color: #c9d1d9; font-size: 0.85em; padding-left: 0;">
+                    <!-- Paths will be injected here -->
+                    <li style="color: #8b949e;">Loading...</li>
                 </ul>
             </div>
 
