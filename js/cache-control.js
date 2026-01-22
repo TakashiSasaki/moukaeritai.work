@@ -192,6 +192,7 @@ function initCacheLogic() {
             summaryDiv.style.fontSize = '0.9rem';
             summaryDiv.style.color = '#c9d1d9';
             summaryDiv.innerHTML = `
+                <div>Total Paths: <span style="color: #c9d1d9;">${urls.length}</span></div>
                 <div>Latest Cache: <span id="summary-cache-date" style="color: #8b949e;">Checking...</span></div>
                 <div>Latest Server: <span id="summary-server-date" style="color: #8b949e;">--</span></div>
                 <div id="summary-errors" style="color: #da3633; display: none;">Errors: <span id="summary-error-count">0</span></div>

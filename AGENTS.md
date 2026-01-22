@@ -50,6 +50,9 @@ This document tracks architectural decisions, workflows, and infrastructure deta
 **Decision:** Separation of content from presentation.
 - **Static Data:** `bookmarks.json` (Fetched via JS).
 - **Dynamic Data:** Firebase Firestore (Future implementation).
+- **Sitemap Handling:** 
+    - `sitemap.xml` contains absolute production URLs (e.g., `https://moukaeritai.work/...`).
+    - **Agent Rule:** Any client-side logic utilizing `sitemap.xml` (e.g., `js/cache-control.js`) **MUST** dynamically replace the domain part of the URL with `window.location.origin`. This ensures functionality in development (localhost, Codespaces) and staging environments.
 
 ### Identity & Backend
 **Decision:** Firebase Authentication (Google Provider).
