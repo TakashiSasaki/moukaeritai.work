@@ -182,9 +182,47 @@ function initCacheLogic() {
             const checkBtn = document.getElementById('check-sitemap-server-btn');
             
             if (!urlList) return;
-            urlList.innerHTML = '';
+
+            // --- UI Restructuring for Accordion & Summary ---
+            const container = urlList.parentElement;
+            
+            // 1. Create Summary Container
+            const summaryDiv = document.createElement('div');
+            summaryDiv.style.marginBottom = '0.5rem';
+            summaryDiv.style.fontSize = '0.9rem';
+            summaryDiv.style.color = '#c9d1d9';
+            summaryDiv.innerHTML = `
+                <div>Latest Cache: <span id="summary-cache-date" style="color: #8b949e;">Checking...</span></div>
+                <div>Latest Server: <span id="summary-server-date" style="color: #8b949e;">--</span></div>
+                <div id="summary-errors" style="color: #da3633; display: none;">Errors: <span id="summary-error-count">0</span></div>
+            `;
+            container.insertBefore(summaryDiv, urlList);
+
+            const summaryCacheDate = summaryDiv.querySelector('#summary-cache-date');
+            const summaryServerDate = summaryDiv.querySelector('#summary-server-date');
+            const summaryErrorsDiv = summaryDiv.querySelector('#summary-errors');
+            const summaryErrorCount = summaryDiv.querySelector('#summary-error-count');
+
+            // 2. Wrap List in Details
+            const details = document.createElement('details');
+            details.style.marginBottom = '1rem';
+            const summary = document.createElement('summary');
+            summary.textContent = 'Show Details';
+            summary.style.cursor = 'pointer';
+            summary.style.color = '#58a6ff';
+            summary.style.fontSize = '0.85rem';
+            summary.style.marginBottom = '0.5rem';
+            
+            details.appendChild(summary);
+            // Move urlList inside details
+            urlList.parentNode.removeChild(urlList);
+            details.appendChild(urlList);
+            container.appendChild(details);
+
+            urlList.innerHTML = ''; // Clear loading state
 
             const items = [];
+            let maxCacheTime = 0;
 
             // Build List & Check Cache
             for (const url of urls) {
@@ -224,6 +262,13 @@ function initCacheLogic() {
                             const d = new Date(res.headers.get('last-modified'));
                             cacheSpan.textContent = d.toLocaleString();
                             cacheSpan.style.color = '#c9d1d9';
+                            
+                            // Update Max Cache Time
+                            if (d.getTime() > maxCacheTime) {
+                                maxCacheTime = d.getTime();
+                                summaryCacheDate.textContent = d.toLocaleString();
+                                summaryCacheDate.style.color = '#27c93f';
+                            }
                         } else {
                             cacheSpan.textContent = 'Not in cache';
                         }
@@ -234,15 +279,34 @@ function initCacheLogic() {
                     cacheSpan.textContent = 'API Unavailable';
                 }
             }
+            
+            // If no cache found after loop (initial check might be async, but for UI updates this is okayish. 
+            // Ideally we'd wait for all promises, but simple update in callback is fine)
+            // Note: The loop fires off async promises. The summary will update progressively.
+            if (!('caches' in window)) {
+                 summaryCacheDate.textContent = 'API Unavailable';
+            } else {
+                 setTimeout(() => {
+                     if (maxCacheTime === 0) summaryCacheDate.textContent = 'Not found / None';
+                 }, 1000); // Small timeout to fallback if nothing found
+            }
 
             // Setup Button Handler for Server Check
             if (checkBtn) {
                 checkBtn.onclick = async () => {
                     checkBtn.disabled = true;
                     checkBtn.textContent = 'Checking...';
+                    
+                    let maxServerTime = 0;
+                    let errorCount = 0;
+                    summaryErrorsDiv.style.display = 'none';
 
-                    for (const item of items) {
+                    // Parallelize requests for speed? Or sequential? Sequential is safer for rate limits/logging.
+                    // Let's do parallel for UX speed on small sitemaps.
+                    const promises = items.map(async (item) => {
                         item.serverSpan.textContent = 'Checking...';
+                        item.serverSpan.style.color = '#8b949e';
+                        
                         try {
                             const sitemapUrl = new URL(item.url);
                             const serverUrl = new URL(sitemapUrl.pathname, window.location.origin);
@@ -250,17 +314,41 @@ function initCacheLogic() {
                             
                             const res = await fetch(serverUrl.toString(), { method: 'HEAD' });
                             const lm = res.headers.get('last-modified');
-                            if (lm) {
-                                item.serverSpan.textContent = new Date(lm).toLocaleString();
+                            
+                            if (res.ok && lm) {
+                                const d = new Date(lm);
+                                item.serverSpan.textContent = d.toLocaleString();
                                 item.serverSpan.style.color = '#27c93f';
+                                
+                                if (d.getTime() > maxServerTime) {
+                                    maxServerTime = d.getTime();
+                                }
                             } else {
-                                item.serverSpan.textContent = 'No Header';
+                                item.serverSpan.textContent = res.statusText || 'No Header / Error';
+                                if (!res.ok) errorCount++;
                             }
                         } catch (e) {
                             item.serverSpan.textContent = 'Error / Offline';
                             item.serverSpan.style.color = '#da3633';
+                            errorCount++;
                         }
+                    });
+
+                    await Promise.all(promises);
+
+                    if (maxServerTime > 0) {
+                        summaryServerDate.textContent = new Date(maxServerTime).toLocaleString();
+                        summaryServerDate.style.color = '#27c93f';
+                    } else {
+                        summaryServerDate.textContent = 'Failed';
+                        summaryServerDate.style.color = '#da3633';
                     }
+
+                    if (errorCount > 0) {
+                        summaryErrorsDiv.style.display = 'block';
+                        summaryErrorCount.textContent = errorCount;
+                    }
+
                     checkBtn.textContent = 'Check Server Status (HEAD)';
                     checkBtn.disabled = false;
                 };
