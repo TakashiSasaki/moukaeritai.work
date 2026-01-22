@@ -213,7 +213,13 @@ function initCacheLogic() {
 
                 // Check Cache Immediately
                 if ('caches' in window) {
-                    caches.match(url).then(res => {
+                    let cacheKey = url;
+                    try {
+                         const u = new URL(url);
+                         cacheKey = new URL(u.pathname, window.location.origin).toString();
+                    } catch(e) {}
+
+                    caches.match(cacheKey).then(res => {
                         if (res && res.headers.get('last-modified')) {
                             const d = new Date(res.headers.get('last-modified'));
                             cacheSpan.textContent = d.toLocaleString();
@@ -238,7 +244,8 @@ function initCacheLogic() {
                     for (const item of items) {
                         item.serverSpan.textContent = 'Checking...';
                         try {
-                            const serverUrl = new URL(item.url);
+                            const sitemapUrl = new URL(item.url);
+                            const serverUrl = new URL(sitemapUrl.pathname, window.location.origin);
                             serverUrl.searchParams.set('_nc', Date.now());
                             
                             const res = await fetch(serverUrl.toString(), { method: 'HEAD' });
