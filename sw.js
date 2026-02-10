@@ -1,14 +1,18 @@
-const CACHE_NAME = 'moukaeritai-v0.1.17-20260108085014';
+const CACHE_NAME = 'moukaeritai-v0.2.5-20260121103830';
 const ASSETS = [
   '/',
   '/index.html',
   '/style.css',
   '/script.js',
   '/manifest.json',
-  '/experimental-layout-1.html',
+  '/bookmarks.json',
+  '/experiments/experimental-layout-1.html',
   '/components/ring-carousel-item.js',
-  '/components/ring-carousel.js'
+  '/components/ring-carousel.js',
+  '/pictgram/64x64.webp/slate_teal.webp'
 ];
+
+let isOfflineModeEnabled = false;
 
 self.addEventListener('install', (event) => {
   // skipWaiting is now triggered by UI interaction
@@ -19,8 +23,13 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+  if (event.data) {
+    if (event.data.type === 'SKIP_WAITING') {
+      self.skipWaiting();
+    }
+    if (event.data.type === 'SET_OFFLINE_MODE') {
+      isOfflineModeEnabled = event.data.value;
+    }
   }
 });
 
@@ -36,6 +45,10 @@ const cleanResponse = (response) => {
 };
 
 self.addEventListener('fetch', (event) => {
+  if (!isOfflineModeEnabled) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {

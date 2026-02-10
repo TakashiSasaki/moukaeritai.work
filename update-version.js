@@ -36,7 +36,8 @@ try {
         process.exit(1);
     }
 
-    // 4. Update index.html
+    // 4. Update index.html - DISABLED (Now handled dynamically in script.js)
+    /*
     const indexPath = path.join(__dirname, 'index.html');
     let indexContent = fs.readFileSync(indexPath, 'utf8');
 
@@ -58,6 +59,9 @@ try {
 
     // 5. Git Add (to include sw.js and index.html in the version commit)
     execSync(`git add sw.js index.html`, { stdio: 'inherit' });
+    */
+    // 5. Git Add (to include sw.js in the version commit)
+    execSync(`git add sw.js`, { stdio: 'inherit' });
 
 } catch (error) {
     console.error('Failed to update version:', error);

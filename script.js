@@ -1,3 +1,12 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { firebaseConfig } from "./firebase/firebaseConfig.js";
+import { loadCacheControlUI } from "./js/cache-control.js";
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
 document.addEventListener('DOMContentLoaded', () => {
     const text = "echo 'Welcome to moukaeritai.work'";
     const element = document.getElementById('typewriter');
@@ -13,10 +22,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     typeWriter();
 
+    // --- Load Bookmarks ---
+    const bookmarksGrid = document.getElementById('bookmarks-grid');
+    if (bookmarksGrid) {
+        fetch('bookmarks.json')
+            .then(response => response.json())
+            .then(data => {
+                bookmarksGrid.innerHTML = data.map(item => {
+                    let targetVal = "_blank";
+                    try {
+                        const urlObj = new URL(item.url);
+                        targetVal = urlObj.hostname;
+                    } catch (e) {
+                        // Fallback if URL parsing fails
+                    }
+                    
+                    return `
+                    <a href="${item.url}" target="${targetVal}" class="card">
+                        <h3>${item.title}</h3>
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-top: 1rem; color: #8b949e;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="48" height="48">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="${item.visuals.iconPath}" />
+                            </svg>
+                            <p>${item.description}</p>
+                        </div>
+                    </a>
+                `}).join('');
+            })
+            .catch(err => console.error('Failed to load bookmarks:', err));
+    }
+
     // --- SPA Router ---
     const routes = {
         '': 'home',
         '#projects': 'projects',
+        '#bookmarks': 'bookmarks',
         '#personalize': 'personalize',
         '#misc': 'misc'
     };
@@ -58,67 +98,94 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('hashchange', router);
     router(); // Initial call
 
-    // Register Service Worker for PWA
-    // Register Service Worker for PWA with update notification
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-            .then((registration) => {
-                console.log('Service Worker registered with scope:', registration.scope);
+    // --- Firebase Auth Logic ---
+    const loginStatusBtn = document.getElementById('login-status-btn');
+    const authLoggedOut = document.getElementById('auth-logged-out');
+    const authLoggedIn = document.getElementById('auth-logged-in');
+    const userAvatar = document.getElementById('user-avatar');
+    const userName = document.getElementById('user-name');
+    const userEmail = document.getElementById('user-email');
+    const btnGoogleLogin = document.getElementById('btn-google-login');
+    const btnLogout = document.getElementById('btn-logout');
 
-                // Helper to show update toast
-                const showUpdateToast = (worker) => {
-                    const toast = document.getElementById('update-toast');
-                    const updateBtn = document.getElementById('update-btn');
-                    const dismissBtn = document.getElementById('dismiss-btn');
+    const iconAnonymous = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>`;
+    const iconLoggedInSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" /></svg>`;
 
-                    toast.classList.remove('hidden');
+    function updateAuthUI(user) {
+        if (user) {
+            // Logged In
+            if (authLoggedOut) authLoggedOut.classList.add('hidden');
+            if (authLoggedIn) authLoggedIn.classList.remove('hidden');
 
-                    updateBtn.onclick = () => {
-                        worker.postMessage({ type: 'SKIP_WAITING' });
-                        toast.classList.add('hidden');
-                    };
+            // Update Profile View
+            if (userAvatar) userAvatar.src = user.photoURL || '';
+            if (userName) userName.textContent = user.displayName || 'User';
+            if (userEmail) userEmail.textContent = user.email || '';
 
-                    dismissBtn.onclick = () => {
-                        toast.classList.add('hidden');
-                    };
-                };
-
-                // Check if there's already a waiting worker (SW updated in background but page not reloaded)
-                if (registration.waiting) {
-                    showUpdateToast(registration.waiting);
+            // Update Top Icon
+            if (loginStatusBtn) {
+                if (user.photoURL) {
+                    // Use Image Avatar
+                    loginStatusBtn.innerHTML = `<img src="${user.photoURL}" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid #27c93f;">`;
+                } else {
+                    // Use SVG Avatar if no photo
+                    loginStatusBtn.innerHTML = iconLoggedInSVG;
                 }
+                loginStatusBtn.style.color = '#27c93f';
+                loginStatusBtn.style.borderColor = '#27c93f';
+                loginStatusBtn.title = `Logged in as ${user.displayName || user.email}`;
+            }
+        } else {
+            // Logged Out
+            if (authLoggedOut) authLoggedOut.classList.remove('hidden');
+            if (authLoggedIn) authLoggedIn.classList.add('hidden');
 
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        // Has network.state changed?
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // New content is available and current page is controlled by older SW
-                            showUpdateToast(newWorker);
-                        }
-                    });
-                });
-            })
-            .catch((error) => {
-                console.log('Service Worker registration failed:', error);
-            });
+            // Update Top Icon
+            if (loginStatusBtn) {
+                loginStatusBtn.innerHTML = iconAnonymous;
+                loginStatusBtn.style.color = '';
+                loginStatusBtn.style.borderColor = '';
+                loginStatusBtn.title = "Personalize / Login";
+            }
+        }
+    }
 
-        // Ensure the page reloads when the new SW takes control
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            window.location.reload();
+    onAuthStateChanged(auth, (user) => {
+        updateAuthUI(user);
+    });
+
+    if (btnGoogleLogin) {
+        btnGoogleLogin.addEventListener('click', async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Login failed:", error);
+                alert("Login failed: " + error.message);
+            }
         });
     }
+
+    if (btnLogout) {
+        btnLogout.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Logout failed:", error);
+            }
+        });
+    }
+
+    // --- Service Worker Logic & UI ---
+    loadCacheControlUI('cache-control-ui-container');
 
     // --- Settings / Personal UUID Logic ---
     const uuidInput = document.getElementById('personal-uuid');
     const saveBtn = document.getElementById('save-uuid');
     const saveStatus = document.getElementById('save-status');
 
-    /**
-     * Extracts 32 hex characters and returns normalized UUID format.
-     * @param {string} str 
-     * @returns {string|null}
-     */
+    // --- Maintenance: Reset Cache (Moved to cache-control.js) ---
+
     function normalizeUUID(str) {
         const hexOnly = str.replace(/[^0-9a-fA-F]/g, '').toLowerCase();
         if (hexOnly.length !== 32) return null;
@@ -136,7 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const hexOnly = rawValue.replace(/[^0-9a-fA-F]/g, '');
         const normalized = normalizeUUID(rawValue);
 
-        // Visual feedback logic
         const segmentLengths = [8, 4, 4, 4, 12];
         const feedbackContainer = document.getElementById('uuid-feedback');
         let currentHexIdx = 0;
@@ -155,28 +221,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     content += "#";
                 }
             }
-
-            span.textContent = content;
-
-            // Color logic: 
-            // - GREEN if the segment is fully filled
-            // - LIGHTER/ACCENT if partially filled
-            // - DARK if empty
-            if (content.indexOf('#') === -1) {
-                span.style.color = '#27c93f'; // Complete
-            } else if (isPartiallyFilled) {
-                span.style.color = '#58a6ff'; // Partially filled (blueish to stand out)
-            } else {
-                span.style.color = '#333';    // Empty
+            if (span) {
+                span.textContent = content;
+                if (content.indexOf('#') === -1) {
+                    span.style.color = '#27c93f';
+                } else if (isPartiallyFilled) {
+                    span.style.color = '#58a6ff';
+                } else {
+                    span.style.color = '#333';
+                }
             }
         });
-
-        // Handle hyphens in UI (simplified: green if previous part is done)
-        if (feedbackContainer) {
-            const texts = feedbackContainer.childNodes;
-            // Hyphens are at index 1, 3, 5, 7 in the childNodes if structured correctly
-            // But we can just use the spans states.
-        }
 
         if (normalized) {
             saveBtn.disabled = false;
@@ -187,30 +242,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Load UUID from localStorage
     const savedUUID = localStorage.getItem('personal_uuid');
-    if (savedUUID) {
+    if (savedUUID && uuidInput) {
         uuidInput.value = savedUUID;
         validate();
     }
 
-    // Validate on every input
-    uuidInput.addEventListener('input', validate);
+    if (uuidInput) {
+        uuidInput.addEventListener('input', validate);
+    }
 
-    // Save UUID
-    saveBtn.addEventListener('click', () => {
-        const normalized = normalizeUUID(uuidInput.value);
-        if (normalized) {
-            localStorage.setItem('personal_uuid', normalized);
-            uuidInput.value = normalized; // Reflect normalized version in UI
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            const normalized = normalizeUUID(uuidInput.value);
+            if (normalized) {
+                localStorage.setItem('personal_uuid', normalized);
+                uuidInput.value = normalized;
 
-            // Show saved status
-            saveStatus.style.opacity = '1';
-            setTimeout(() => {
-                saveStatus.style.opacity = '0';
-            }, 2000);
+                if (saveStatus) {
+                    saveStatus.style.opacity = '1';
+                    setTimeout(() => {
+                        saveStatus.style.opacity = '0';
+                    }, 2000);
+                }
+                validate();
+            }
+        });
+    }
 
-            validate();
-        }
-    });
+    // (System status and version checks moved to cache-control.js)
 });

@@ -1,0 +1,36 @@
+            <div style="margin-top: 2rem; border-top: 1px solid #30363d; padding-top: 1rem;">
+                <h3 style="font-size: 1.1em; color: #8b949e; margin-bottom: 0.5rem;">./package.json</h3>
+                <ul style="list-style: none; color: #c9d1d9; font-size: 0.9rem; line-height: 1.6;">
+                    <li>> Version: <span id="app-version-display">v...</span></li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <h3 style="font-size: 1.1em; color: #8b949e; margin-bottom: 0.5rem;">./sitemap.xml</h3>
+                <div style="margin-bottom: 0.5rem;">
+                    <button id="check-sitemap-server-btn" style="padding: 4px 8px; font-size: 0.8rem; background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px; cursor: pointer;">
+                        Check Server Status (HEAD)
+                    </button>
+                </div>
+                <ul id="sitemap-url-list" style="list-style: none; color: #c9d1d9; font-size: 0.85em; padding-left: 0;">
+                    <!-- Paths will be injected here -->
+                    <li style="color: #8b949e;">Loading...</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <h3 style="font-size: 1.1em; color: #8b949e; margin-bottom: 0.5rem;">./status</h3>
+                <ul style="list-style: none; color: #c9d1d9; font-size: 0.9rem; line-height: 1.6;">
+                    <li>> sw.registration.update(): <span id="last-checked-display">--/-- --:--</span></li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 2rem; border-top: 1px solid #30363d; padding-top: 1rem;">
+                <h3 style="font-size: 1.1em; color: #8b949e; margin-bottom: 0.5rem;">./maintenance</h3>
+                <button id="reset-cache-btn" style="padding: 0.5rem 1rem; background: #da3633; color: white; border: none; border-radius: 4px; cursor: pointer; font-family: inherit;">
+                    Force Reset Cache
+                </button>
+                <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #8b949e;">
+                    Use this if the application behaves unexpectedly. It will unregister the Service Worker, clear storage, and reload the page.
+                </p>
+            </div>

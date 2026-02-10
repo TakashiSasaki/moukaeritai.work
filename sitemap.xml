@@ -2,14 +2,56 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://moukaeritai.work/</loc>
-    <lastmod>2026-01-08</lastmod>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://moukaeritai.work/experimental-layout-1.html</loc>
-    <lastmod>2026-01-08</lastmod>
+    <loc>https://moukaeritai.work/experiments/experimental-layout-1.html</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://moukaeritai.work/firebase/index.html</loc>
+    <lastmod>2026-01-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://moukaeritai.work/bookmarks.json</loc>
+    <lastmod>2026-01-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://moukaeritai.work/script.js</loc>
+    <lastmod>2026-01-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://moukaeritai.work/style.css</loc>
+    <lastmod>2026-01-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://moukaeritai.work/sw.js</loc>
+    <lastmod>2026-01-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://moukaeritai.work/components/cache-control.html</loc>
+    <lastmod>2026-01-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://moukaeritai.work/js/cache-control.js</loc>
+    <lastmod>2026-01-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>

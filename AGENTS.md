@@ -15,39 +15,82 @@ This document tracks architectural decisions, workflows, and infrastructure deta
 - **Automation (`update-version.js`):**
     - Runs automatically via the `version` npm hook.
     - **Service Worker:** Updates `CACHE_NAME` in `sw.js` (Format: `moukaeritai-v{version}-{timestamp}`).
-    - **UI:** Updates the footer version string in `index.html` (Format: `v{version} ({YYYY/MM/DD HH:mm})`).
-    - **Git:** Automatically stages updated files for the version commit.
+    - **Git:** Automatically stages `sw.js` for the version commit.
+- **UI Display:**
+    - **Runtime:** `js/cache-control.js` fetches `package.json` at runtime to display the version string in the UI.
 
 > [!IMPORTANT]
-> **Agent Rule:** When modifying any site content (HTML, CSS, JS), you **MUST** run `npm version patch` (or minor/major) before pushing. This is critical because `sw.js` relies on the version string in `CACHE_NAME` to invalidate the old cache. If you skip this, users will simply see the old cached version forever.
+> **Agent Rule:** When modifying any site content that requires cache invalidation:
+>
+> **Protocol:**
+> 1. **Preferred Method:** Run `npm version patch`. This ensures `sw.js` is modified (via `CACHE_NAME` update), forcing browsers to detect the new Service Worker.
+> 2. **Manual Fallback:** If the script fails, you must MANUALLY update the `CACHE_NAME` variable in `sw.js` to a new unique string.
+>
+> **Why?** If `sw.js` remains byte-identical, the browser will ignore the update, and users will remain on the old cached version.
 
 ### Deployment Pipeline
 - **Target:** [fly.io](https://fly.io)
 - **Production URL:** [https://moukaeritai.work/](https://moukaeritai.work/)
 - **Repository:** [GitHub - TakashiSasaki/moukaeritai.work](https://github.com/TakashiSasaki/moukaeritai.work)
 - **Trigger:** Automated deployment occurs on every push to the `main` branch.
-- **Infrastructure:** Identified by `fly.toml` and `Dockerfile`.
 
 ---
 
-## 2. PWA & Service Worker Strategy
+## 2. Core Architecture & Navigation
 
-### Update Protocol
-**Decision:** User-controlled update activation (no automatic `skipWaiting`).
+### Single Page Application (SPA)
+**Decision:** Hash-based client-side routing.
 
 **Implementation:**
-- **Controlled Activation:** The Service Worker waits in the `installed` state.
-- **User Notification:** `script.js` listens for `updatefound`. When a new version is detected, a Toast notification appears: *"A new version is available. [Update] [Dismiss]"*.
-- **Activation:** Clicking **[Update]** sends `SKIP_WAITING` to the SW.
-- **Refresh:** The page reloads automatically upon `controllerchange`.
+- **Structure:** `index.html` contains all logical views (Home, Projects, Bookmarks, Personalize) as separate `<div id="view-name" class="spa-view">` elements.
+- **Routing:** `script.js` listens to the `hashchange` event (and on load) to toggle visibility.
+- **State:** Transient DOM state + `localStorage` (UUID).
 
-**Reasoning:**
-- Eliminates "stale content" while avoiding session disruption.
-- Provides a native app-like experience for updates.
+### Data Management
+**Decision:** Separation of content from presentation.
+- **Static Data:** `bookmarks.json` (Fetched via JS).
+- **Dynamic Data:** Firebase Firestore (Future implementation).
+- **Sitemap Handling:** 
+    - `sitemap.xml` contains absolute production URLs (e.g., `https://moukaeritai.work/...`).
+    - **Agent Rule:** Any client-side logic utilizing `sitemap.xml` (e.g., `js/cache-control.js`) **MUST** dynamically replace the domain part of the URL with `window.location.origin`. This ensures functionality in development (localhost, Codespaces) and staging environments.
+
+### Identity & Backend
+**Decision:** Firebase Authentication (Google Provider).
+
+**Implementation:**
+- **SDK:** initialized in `script.js` using modular Firebase v9+ imports.
+- **Auth Flow:** `signInWithPopup` for Google Login.
+- **UI:** `onAuthStateChanged` listener updates the "Personalize" view and header icon state.
 
 ---
 
-## 3. Interaction & Experimental Features
+## 3. PWA & Service Worker Strategy
+
+### Offline Mode Strategy
+**Decision:** Explicit Offline Mode Control.
+
+**Implementation:**
+- **Default:** Service Worker starts in "Passthrough" mode (does not intercept fetches).
+- **Activation:** `js/cache-control.js` sends a `SET_OFFLINE_MODE: true` message to the SW on startup.
+- **Logic:** The SW only serves from cache if `isOfflineModeEnabled` is true.
+
+### Update Protocol
+**Decision:** User-controlled update activation.
+
+**Implementation:**
+- **Controlled Activation:** `script.js` listens for `updatefound`.
+- **UI:** A Toast notification appears: *"A new version is available."*
+- **Action:** Clicking **[Update]** sends `SKIP_WAITING` to the SW, triggering a page reload.
+
+### Maintenance Rule
+> [!IMPORTANT]
+> **Agent Rule:** When adding NEW files (HTML, JS, CSS, JSON, Images) to the project:
+> 1. **Update `ASSETS`:** You **MUST** manually add the relative path to the `ASSETS` array in `sw.js`.
+> 2. **Verification:** Failure to do this will result in the new file being unavailable in Offline Mode.
+
+---
+
+## 4. Interaction & Experimental Features
 
 ### Unified Input Handling
 **Decision:** Use Pointer Events for all draggable/interactive components.
